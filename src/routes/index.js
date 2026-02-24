@@ -1,4 +1,5 @@
 import { Router } from "express";
+import authRoutes from "./auth.routes.js";
 
 const router = Router();
 
@@ -11,5 +12,8 @@ router.get("/health", (req, res) => {
     message: "API running correctly",
   });
 });
+
+router.use("/auth", authRoutes);
+
 
 export default router;
