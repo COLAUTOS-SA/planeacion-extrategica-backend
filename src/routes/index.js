@@ -1,6 +1,8 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes.js";
 import resultadoRoutes from "./resultado_clave.routes.js";
+import aprendizajeRoutes from "./aprendizaje.routes.js";
+import prioridadRoutes from "./prioridad.route.js";
 
 const router = Router();
 
@@ -18,5 +20,8 @@ router.use("/auth", authRoutes);
 
 router.use("/resultados", resultadoRoutes);
 
+router.use("/aprendizajes", aprendizajeRoutes);
+
+router.use("/prioridades", prioridadRoutes);
 
 export default router;
