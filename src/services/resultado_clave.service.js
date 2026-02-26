@@ -1,11 +1,20 @@
 // src/services/resultado_clave.service.js
 
+import { EstadoModel } from "../models/estado.model.js";
+import { AppError } from "../utils/AppError.js";
+
+const estadoModel = new EstadoModel();
+
 export class ResultadoClaveService {
   constructor(model) {
     this.model = model;
   }
 
   async create(data, userId) {
+    if (!(await estadoModel.exists(data.id_estado))) {
+      throw new AppError("Estado no válido", 400);
+    }
+
     return this.model.create({
       ...data,
       fecha_inicio: data.fecha_inicio ? new Date(data.fecha_inicio) : null,
@@ -20,6 +29,12 @@ export class ResultadoClaveService {
   }
 
   async update(id, data, userId) {
+    if (data.id_estado) {
+      if (!(await estadoModel.exists(data.id_estado))) {
+        throw new AppError("Estado no válido", 400);
+      }
+    }
+
     const existing = await this.model.findById(id);
 
     if (!existing) {

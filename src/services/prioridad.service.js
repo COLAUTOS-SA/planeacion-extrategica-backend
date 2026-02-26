@@ -1,9 +1,18 @@
+import { EstadoModel } from "../models/estado.model.js";
+import { AppError } from "../utils/AppError.js";
+
+const estadoModel = new EstadoModel();
+
 export class PrioridadService {
   constructor(model) {
     this.model = model;
   }
 
   async create(data, userId) {
+    if (!(await estadoModel.exists(data.id_estado))) {
+      throw new AppError("Estado no válido", 400);
+    }
+
     return this.model.create({
       ...data,
       fecha: data.fecha ? new Date(data.fecha) : null,
@@ -16,10 +25,14 @@ export class PrioridadService {
   }
 
   async update(id, data, userId) {
+    if (!(await estadoModel.exists(data.id_estado))) {
+      throw new AppError("Estado no válido", 400);
+    }
+
     const existing = await this.model.findById(id);
 
     if (!existing) {
-      throw { status: 404, message: "Prioridad no encontrada" };
+      throw new AppError("Prioridad no encontrada", 404);
     }
 
     if (existing.id_responsable !== userId) {
@@ -33,7 +46,7 @@ export class PrioridadService {
     const existing = await this.model.findById(id);
 
     if (!existing) {
-      throw { status: 404, message: "Prioridad no encontrada" };
+      throw new AppError("Prioridad no encontrada", 404);
     }
 
     if (existing.id_responsable !== userId) {

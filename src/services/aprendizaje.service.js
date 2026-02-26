@@ -1,9 +1,17 @@
+import { EstadoModel } from "../models/estado.model.js";
+import { AppError } from "../utils/AppError.js";
+
+const estadoModel = new EstadoModel();
+
 export class AprendizajeService {
   constructor(model) {
     this.model = model;
   }
 
   async create(data, userId) {
+    if (!(await estadoModel.exists(data.id_estado))) {
+      throw new AppError("Estado no válido", 400);
+    }
     return this.model.create({
       ...data,
       id_responsable: userId,
@@ -15,6 +23,10 @@ export class AprendizajeService {
   }
 
   async update(id, data, userId) {
+    if (!(await estadoModel.exists(data.id_estado))) {
+      throw new AppError("Estado no válido", 400);
+    }
+
     const existing = await this.model.findById(id);
 
     if (!existing) {
