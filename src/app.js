@@ -21,6 +21,16 @@ app.use(morgan("dev"));
  */
 app.use("/api", routes);
 
+// Health Check
+
+app.get("/api/health", (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "API funcionando correctamente",
+    });
+});
+
+
 /**
  * Error Handling
  */
