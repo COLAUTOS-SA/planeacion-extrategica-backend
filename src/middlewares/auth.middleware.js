@@ -1,5 +1,3 @@
-// src/middlewares/auth.middleware.js
-
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 
@@ -14,7 +12,9 @@ export const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET);
-    req.user = decoded;
+
+    req.user = decoded; // ahora decoded.id es id_usuario
+
     next();
   } catch {
     return res.status(401).json({ message: "Invalid token" });
