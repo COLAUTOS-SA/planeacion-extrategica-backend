@@ -20,4 +20,12 @@ export class UserModel {
       where: { id_usuario: id },
     });
   }
+
+  async findAllByUser(userId, page, limit) {
+    return prisma.resultado_clave.findMany({
+      where: { id_responsable: userId },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+  }
 }

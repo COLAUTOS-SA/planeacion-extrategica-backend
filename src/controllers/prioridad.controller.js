@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { successResponse } from "../utils/response.js";
 
 const createSchema = z.object({
   descripcion: z.string().min(3),
@@ -17,7 +18,7 @@ export class PrioridadController {
       const data = createSchema.parse(req.body);
       const result = await this.service.create(data, req.user.id);
 
-      res.status(201).json({ success: true, data: result });
+      return successResponse(res, result, "Creado correctamente", 201);
     } catch (error) {
       next(error);
     }
@@ -27,7 +28,7 @@ export class PrioridadController {
     try {
       const results = await this.service.getAll(req.user.id);
 
-      res.json({ success: true, data: results });
+      return successResponse(res, results);
     } catch (error) {
       next(error);
     }
@@ -38,7 +39,7 @@ export class PrioridadController {
       const id = parseInt(req.params.id);
       const result = await this.service.update(id, req.body, req.user.id);
 
-      res.json({ success: true, data: result });
+      return successResponse(res, result);
     } catch (error) {
       next(error);
     }
@@ -49,7 +50,7 @@ export class PrioridadController {
       const id = parseInt(req.params.id);
       await this.service.delete(id, req.user.id);
 
-      res.json({ success: true, message: "Prioridad eliminada" });
+      return successResponse(res, null, "Prioridad eliminada", 200);
     } catch (error) {
       next(error);
     }

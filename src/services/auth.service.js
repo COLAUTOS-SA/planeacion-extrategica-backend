@@ -29,6 +29,10 @@ export class AuthService {
   async login(data) {
     const user = await this.userModel.findByEmail(data.email);
 
+    if (!user.activo) {
+      throw new AppError("Usuario inactivo", 403);
+    }
+
     if (!user) {
       throw { status: 400, message: "Invalid credentials" };
     }

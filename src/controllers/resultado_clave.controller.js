@@ -1,6 +1,7 @@
 // src/controllers/resultado_clave.controller.js
 
 import { z } from "zod";
+import { successResponse } from "../utils/response.js";
 
 const createSchema = z.object({
   compromiso: z.string().min(3),
@@ -23,10 +24,7 @@ export class ResultadoClaveController {
 
       const result = await this.service.create(data, userId);
 
-      res.status(201).json({
-        success: true,
-        data: result,
-      });
+      return successResponse(res, result, "Creado correctamente", 201);
     } catch (error) {
       next(error);
     }
@@ -38,10 +36,7 @@ export class ResultadoClaveController {
 
       const results = await this.service.getAll(userId);
 
-      res.json({
-        success: true,
-        data: results,
-      });
+      return successResponse(res, results);
     } catch (error) {
       next(error);
     }
@@ -54,10 +49,7 @@ export class ResultadoClaveController {
 
       const result = await this.service.update(id, req.body, userId);
 
-      res.json({
-        success: true,
-        data: result,
-      });
+      return successResponse(res, result);
     } catch (error) {
       next(error);
     }
@@ -70,10 +62,23 @@ export class ResultadoClaveController {
 
       await this.service.delete(id, userId);
 
-      res.json({
-        success: true,
-        message: "Resultado eliminado correctamente",
-      });
+      return successResponse(
+        res,
+        null,
+        "Resultado clave eliminado correctamente",
+        200,
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getById = async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      const result = await this.service.getById(id, req.user.id);
+
+      return successResponse(res, result);
     } catch (error) {
       next(error);
     }

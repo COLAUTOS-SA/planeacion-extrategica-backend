@@ -61,4 +61,18 @@ export class ResultadoClaveService {
 
     return this.model.delete(id);
   }
+
+  async getById(id, userId) {
+    const existing = await this.model.findById(id);
+
+    if (!existing) {
+      throw new AppError("Resultado clave no encontrado", 404);
+    }
+
+    if (existing.id_responsable !== userId) {
+      throw new AppError("No autorizado", 403);
+    }
+
+    return existing;
+  }
 }

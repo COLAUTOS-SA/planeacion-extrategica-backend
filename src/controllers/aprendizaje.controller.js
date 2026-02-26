@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { successResponse } from "../utils/response.js";
 
 const createSchema = z.object({
   descripcion: z.string().min(3),
@@ -19,7 +20,7 @@ export class AprendizajeController {
 
       const result = await this.service.create(data, userId);
 
-      res.status(201).json({ success: true, data: result });
+      return successResponse(res, result, "Creado correctamente", 201);
     } catch (error) {
       next(error);
     }
@@ -29,7 +30,7 @@ export class AprendizajeController {
     try {
       const results = await this.service.getAll(req.user.id);
 
-      res.json({ success: true, data: results });
+      return successResponse(res, results);
     } catch (error) {
       next(error);
     }
@@ -40,7 +41,7 @@ export class AprendizajeController {
       const id = parseInt(req.params.id);
       const result = await this.service.update(id, req.body, req.user.id);
 
-      res.json({ success: true, data: result });
+      return successResponse(res, result);
     } catch (error) {
       next(error);
     }
@@ -51,7 +52,7 @@ export class AprendizajeController {
       const id = parseInt(req.params.id);
       await this.service.delete(id, req.user.id);
 
-      res.json({ success: true, message: "Aprendizaje eliminado" });
+      return successResponse(res, null, "Aprendizaje eliminado", 200);
     } catch (error) {
       next(error);
     }

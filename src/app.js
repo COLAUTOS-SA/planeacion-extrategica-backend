@@ -5,13 +5,24 @@ import morgan from "morgan";
 import routes from "./routes/index.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { notFound } from "./middlewares/notFound.js";
+import rateLimit from "express-rate-limit";
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
 
 const app = express();
 
+app.use(limiter);
 /**
  * Global Middlewares
  */
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
