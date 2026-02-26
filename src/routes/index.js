@@ -1,5 +1,6 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes.js";
+import resultadoRoutes from "./resultado_clave.routes.js";
 
 const router = Router();
 
@@ -14,6 +15,8 @@ router.get("/health", (req, res) => {
 });
 
 router.use("/auth", authRoutes);
+
+router.use("/resultados", resultadoRoutes);
 
 
 export default router;
