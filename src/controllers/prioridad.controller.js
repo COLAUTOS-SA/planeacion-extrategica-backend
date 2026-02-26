@@ -26,9 +26,9 @@ export class PrioridadController {
 
   getAll = async (req, res, next) => {
     try {
-      const results = await this.service.getAll(req.user.id);
+      const result = await this.service.getAll(req.user.id, req.query);
 
-      return successResponse(res, results);
+      return successResponse(res, result);
     } catch (error) {
       next(error);
     }

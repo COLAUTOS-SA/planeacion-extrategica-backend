@@ -32,11 +32,9 @@ export class ResultadoClaveController {
 
   getAll = async (req, res, next) => {
     try {
-      const userId = req.user.id;
+      const result = await this.service.getAll(req.user.id, req.query);
 
-      const results = await this.service.getAll(userId);
-
-      return successResponse(res, results);
+      return successResponse(res, result);
     } catch (error) {
       next(error);
     }

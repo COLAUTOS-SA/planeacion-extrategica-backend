@@ -20,8 +20,45 @@ export class PrioridadService {
     });
   }
 
-  async getAll(userId) {
-    return this.model.findAllByUser(userId);
+  async getAll(userId, query) {
+    const page = parseInt(query.page) || 1;
+    const limit = parseInt(query.limit) || 10;
+
+    if (page < 1 || limit < 1) {
+      throw new AppError("Parámetros de paginación inválidos", 400);
+    }
+
+    const skip = (page - 1) * limit;
+
+    const where = {};
+
+    if (query.estado) {
+      const estadoId = parseInt(query.estado);
+
+      if (isNaN(estadoId)) {
+        throw new AppError("Estado inválido", 400);
+      }
+
+      where.id_estado = estadoId;
+    }
+
+    const data = await this.model.findAllByUser(userId, {
+      where,
+      skip,
+      take: limit,
+    });
+
+    const total = await this.model.countByUser(userId, where);
+
+    return {
+      data,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async update(id, data, userId) {

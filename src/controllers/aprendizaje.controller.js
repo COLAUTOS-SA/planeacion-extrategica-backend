@@ -28,9 +28,8 @@ export class AprendizajeController {
 
   getAll = async (req, res, next) => {
     try {
-      const results = await this.service.getAll(req.user.id);
-
-      return successResponse(res, results);
+      const result = await this.service.getAll(req.user.id, req.query);
+      return successResponse(res, result);
     } catch (error) {
       next(error);
     }

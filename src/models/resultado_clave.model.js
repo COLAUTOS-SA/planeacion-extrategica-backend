@@ -9,14 +9,16 @@ export class ResultadoClaveModel {
     });
   }
 
-  async findAllByUser(userId) {
+  async findAllByUser(userId, options) {
+    const { where, skip, take } = options;
+
     return prisma.resultado_clave.findMany({
       where: {
         id_responsable: userId,
+        ...where,
       },
-      include: {
-        estado: true,
-      },
+      skip,
+      take,
       orderBy: {
         fecha_creacion: "desc",
       },
@@ -44,6 +46,15 @@ export class ResultadoClaveModel {
     return prisma.resultado_clave.delete({
       where: {
         id_resultado: id,
+      },
+    });
+  }
+
+  async countByUser(userId, where) {
+    return prisma.resultado_clave.count({
+      where: {
+        id_responsable: userId,
+        ...where,
       },
     });
   }

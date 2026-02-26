@@ -5,11 +5,19 @@ export class PrioridadModel {
     return prisma.prioridad.create({ data });
   }
 
-  async findAllByUser(userId) {
+  async findAllByUser(userId, options) {
+    const { where, skip, take } = options;
+
     return prisma.prioridad.findMany({
-      where: { id_responsable: userId },
-      include: { estado: true },
-      orderBy: { fecha: "desc" },
+      where: {
+        id_responsable: userId,
+        ...where,
+      },
+      skip,
+      take,
+      orderBy: {
+        fecha: "desc",
+      },
     });
   }
 
@@ -29,6 +37,15 @@ export class PrioridadModel {
   async delete(id) {
     return prisma.prioridad.delete({
       where: { id_prioridad: id },
+    });
+  }
+
+  async countByUser(userId, where) {
+    return prisma.prioridad.count({
+      where: {
+        id_responsable: userId,
+        ...where,
+      },
     });
   }
 }

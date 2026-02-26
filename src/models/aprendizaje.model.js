@@ -7,14 +7,16 @@ export class AprendizajeModel {
     });
   }
 
-  async findAllByUser(userId) {
+  async findAllByUser(userId, options) {
+    const { where, skip, take } = options;
+
     return prisma.aprendizaje.findMany({
       where: {
         id_responsable: userId,
+        ...where,
       },
-      include: {
-        estado: true,
-      },
+      skip,
+      take,
       orderBy: {
         fecha: "desc",
       },
@@ -42,6 +44,15 @@ export class AprendizajeModel {
     return prisma.aprendizaje.delete({
       where: {
         id_aprendizaje: id,
+      },
+    });
+  }
+
+  async countByUser(userId, where) {
+    return prisma.aprendizaje.count({
+      where: {
+        id_responsable: userId,
+        ...where,
       },
     });
   }
