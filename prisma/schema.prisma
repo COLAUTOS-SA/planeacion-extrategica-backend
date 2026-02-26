@@ -164,7 +164,7 @@ model plan_alto_nivel {
 model prioridad {
   id_prioridad   Int       @id @default(autoincrement())
   descripcion    String    @db.Text
-  fecha          DateTime? @db.Date
+  fecha          Date @db.Date
   comentarios    String?   @db.Text
   id_responsable Int
   id_estado      Int
@@ -207,8 +207,8 @@ model resultado_clave {
   id_resultado   Int       @id @default(autoincrement())
   compromiso     String    @db.Text
   fecha_creacion DateTime? @db.Date
-  fecha_inicio   DateTime? @db.Date
-  fecha_fin      DateTime? @db.Date
+  fecha_inicio   Date @db.Date
+  fecha_fin      Date @db.Date
   comentarios    String?   @db.Text
   favorito       Boolean?  @default(false)
   id_responsable Int

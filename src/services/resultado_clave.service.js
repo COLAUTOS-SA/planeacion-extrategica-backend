@@ -8,6 +8,8 @@ export class ResultadoClaveService {
   async create(data, userId) {
     return this.model.create({
       ...data,
+      fecha_inicio: data.fecha_inicio ? new Date(data.fecha_inicio) : null,
+      fecha_fin: data.fecha_fin ? new Date(data.fecha_fin) : null,
       id_responsable: userId,
       fecha_creacion: new Date(),
     });

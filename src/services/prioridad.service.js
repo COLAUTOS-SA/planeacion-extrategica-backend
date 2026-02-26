@@ -6,6 +6,7 @@ export class PrioridadService {
   async create(data, userId) {
     return this.model.create({
       ...data,
+      fecha: data.fecha ? new Date(data.fecha) : null,
       id_responsable: userId,
     });
   }
