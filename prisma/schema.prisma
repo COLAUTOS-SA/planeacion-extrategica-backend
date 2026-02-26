@@ -1,0 +1,259 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model aprendizaje {
+  id_aprendizaje Int       @id @default(autoincrement())
+  descripcion    String    @db.Text
+  fecha          DateTime? @db.Date
+  comentarios    String?   @db.Text
+  id_responsable Int
+  id_estado      Int
+  usuario        usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "aprendizaje_ibfk_1")
+  estado         estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "aprendizaje_ibfk_2")
+
+  @@index([id_estado], map: "id_estado")
+  @@index([id_responsable], map: "id_responsable")
+}
+
+model calendario_estrategico {
+  id_evento           Int               @id @default(autoincrement())
+  fecha               DateTime          @db.Date
+  resumen             String?           @db.Text
+  observaciones       String?           @db.Text
+  id_objetivo_general Int?
+  id_usuario_creador  Int
+  objetivo_general    objetivo_general? @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onDelete: NoAction, onUpdate: NoAction, map: "calendario_estrategico_ibfk_1")
+  usuario             usuario           @relation(fields: [id_usuario_creador], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "calendario_estrategico_ibfk_2")
+
+  @@index([id_objetivo_general], map: "id_objetivo_general")
+  @@index([id_usuario_creador], map: "id_usuario_creador")
+}
+
+model calendario_lideres {
+  id_evento           Int                   @id @default(autoincrement())
+  fecha               DateTime              @db.Date
+  resumen_reunion     String?               @db.Text
+  id_usuario_creador  Int
+  usuario             usuario               @relation(fields: [id_usuario_creador], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "calendario_lideres_ibfk_1")
+  repositorio_lideres repositorio_lideres[]
+
+  @@index([id_usuario_creador], map: "id_usuario_creador")
+}
+
+model estado {
+  id_estado       Int               @id @default(autoincrement())
+  nombre          String            @db.VarChar(50)
+  aprendizaje     aprendizaje[]
+  prioridad       prioridad[]
+  resultado_clave resultado_clave[]
+  tarea           tarea[]
+}
+
+model filosofia {
+  id_filosofia          Int       @id @default(autoincrement())
+  valores               String?   @db.Text
+  proposito             String?   @db.Text
+  propuesta_valor       String?   @db.Text
+  mega                  String?   @db.Text
+  horizonte_crecimiento String?   @db.Text
+  created_at            DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model historial_cambios {
+  id_historial     Int       @id @default(autoincrement())
+  entidad_afectada String    @db.VarChar(100)
+  id_registro      Int
+  accion           String    @db.VarChar(20)
+  comentario       String?   @db.Text
+  fecha            DateTime? @default(now()) @db.Timestamp(0)
+  id_usuario       Int?
+  usuario          usuario?  @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "historial_cambios_ibfk_1")
+
+  @@index([id_usuario], map: "id_usuario")
+}
+
+model kpi {
+  id_kpi              Int               @id @default(autoincrement())
+  titulo              String            @db.VarChar(200)
+  proceso             String?           @db.VarChar(150)
+  meta                Decimal           @db.Decimal(10, 2)
+  valor_actual        Decimal           @db.Decimal(10, 2)
+  plan_accion         String?           @db.Text
+  id_responsable      Int
+  id_objetivo_general Int?
+  created_at          DateTime?         @default(now()) @db.Timestamp(0)
+  usuario             usuario           @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "kpi_ibfk_1")
+  objetivo_general    objetivo_general? @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onDelete: NoAction, onUpdate: NoAction, map: "kpi_ibfk_2")
+
+  @@index([id_objetivo_general], map: "id_objetivo_general")
+  @@index([id_responsable], map: "id_responsable")
+}
+
+model negocio {
+  id_negocio      Int               @id @default(autoincrement())
+  nombre          String            @db.VarChar(150)
+  plan_alto_nivel plan_alto_nivel[]
+}
+
+model objetivo_especifico {
+  id_objetivo_especifico    Int                         @id @default(autoincrement())
+  titulo                    String                      @db.VarChar(200)
+  descripcion               String?                     @db.Text
+  id_objetivo_general       Int
+  id_responsable            Int
+  created_at                DateTime?                   @default(now()) @db.Timestamp(0)
+  objetivo_general          objetivo_general            @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onDelete: NoAction, onUpdate: NoAction, map: "objetivo_especifico_ibfk_1")
+  usuario                   usuario                     @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "objetivo_especifico_ibfk_2")
+  objetivo_interdependencia objetivo_interdependencia[]
+  tarea                     tarea[]
+
+  @@index([id_objetivo_general], map: "id_objetivo_general")
+  @@index([id_responsable], map: "id_responsable")
+}
+
+model objetivo_general {
+  id_objetivo_general     Int                       @id @default(autoincrement())
+  titulo                  String                    @db.VarChar(200)
+  descripcion             String?                   @db.Text
+  id_perspectiva          Int
+  id_responsable          Int
+  created_at              DateTime?                 @default(now()) @db.Timestamp(0)
+  calendario_estrategico  calendario_estrategico[]
+  kpi                     kpi[]
+  objetivo_especifico     objetivo_especifico[]
+  perspectiva             perspectiva               @relation(fields: [id_perspectiva], references: [id_perspectiva], onDelete: NoAction, onUpdate: NoAction, map: "objetivo_general_ibfk_1")
+  usuario                 usuario                   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "objetivo_general_ibfk_2")
+  repositorio_estrategico repositorio_estrategico[]
+
+  @@index([id_perspectiva], map: "id_perspectiva")
+  @@index([id_responsable], map: "id_responsable")
+}
+
+model objetivo_interdependencia {
+  id_objetivo_especifico Int
+  id_usuario             Int
+  objetivo_especifico    objetivo_especifico @relation(fields: [id_objetivo_especifico], references: [id_objetivo_especifico], onDelete: NoAction, onUpdate: NoAction, map: "objetivo_interdependencia_ibfk_1")
+  usuario                usuario             @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "objetivo_interdependencia_ibfk_2")
+
+  @@id([id_objetivo_especifico, id_usuario])
+  @@index([id_usuario], map: "id_usuario")
+}
+
+model perspectiva {
+  id_perspectiva   Int                @id @default(autoincrement())
+  nombre           String             @db.VarChar(100)
+  objetivo_general objetivo_general[]
+}
+
+model plan_alto_nivel {
+  id_plan        Int     @id @default(autoincrement())
+  anio           Int     @db.Year
+  valor_esperado Decimal @db.Decimal(18, 2)
+  id_negocio     Int
+  negocio        negocio @relation(fields: [id_negocio], references: [id_negocio], onDelete: NoAction, onUpdate: NoAction, map: "plan_alto_nivel_ibfk_1")
+
+  @@index([id_negocio], map: "id_negocio")
+}
+
+model prioridad {
+  id_prioridad   Int       @id @default(autoincrement())
+  descripcion    String    @db.Text
+  fecha          DateTime? @db.Date
+  comentarios    String?   @db.Text
+  id_responsable Int
+  id_estado      Int
+  usuario        usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "prioridad_ibfk_1")
+  estado         estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "prioridad_ibfk_2")
+
+  @@index([id_estado], map: "id_estado")
+  @@index([id_responsable], map: "id_responsable")
+}
+
+model repositorio_estrategico {
+  id_documento        Int               @id @default(autoincrement())
+  nombre_archivo      String?           @db.VarChar(200)
+  ruta                String?           @db.VarChar(500)
+  fecha               DateTime?         @db.Date
+  id_objetivo_general Int?
+  id_usuario_creador  Int
+  objetivo_general    objetivo_general? @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onDelete: NoAction, onUpdate: NoAction, map: "repositorio_estrategico_ibfk_1")
+  usuario             usuario           @relation(fields: [id_usuario_creador], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "repositorio_estrategico_ibfk_2")
+
+  @@index([id_objetivo_general], map: "id_objetivo_general")
+  @@index([id_usuario_creador], map: "id_usuario_creador")
+}
+
+model repositorio_lideres {
+  id_documento       Int                 @id @default(autoincrement())
+  nombre_archivo     String?             @db.VarChar(200)
+  ruta               String?             @db.VarChar(500)
+  fecha              DateTime?           @db.Date
+  id_evento          Int?
+  id_usuario_creador Int
+  calendario_lideres calendario_lideres? @relation(fields: [id_evento], references: [id_evento], onDelete: NoAction, onUpdate: NoAction, map: "repositorio_lideres_ibfk_1")
+  usuario            usuario             @relation(fields: [id_usuario_creador], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "repositorio_lideres_ibfk_2")
+
+  @@index([id_evento], map: "id_evento")
+  @@index([id_usuario_creador], map: "id_usuario_creador")
+}
+
+model resultado_clave {
+  id_resultado   Int       @id @default(autoincrement())
+  compromiso     String    @db.Text
+  fecha_creacion DateTime? @db.Date
+  fecha_inicio   DateTime? @db.Date
+  fecha_fin      DateTime? @db.Date
+  comentarios    String?   @db.Text
+  favorito       Boolean?  @default(false)
+  id_responsable Int
+  id_estado      Int
+  usuario        usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "resultado_clave_ibfk_1")
+  estado         estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "resultado_clave_ibfk_2")
+
+  @@index([id_estado], map: "id_estado")
+  @@index([id_responsable], map: "id_responsable")
+}
+
+model tarea {
+  id_tarea               Int                 @id @default(autoincrement())
+  descripcion            String              @db.Text
+  id_objetivo_especifico Int
+  id_responsable         Int
+  id_estado              Int
+  created_at             DateTime?           @default(now()) @db.Timestamp(0)
+  objetivo_especifico    objetivo_especifico @relation(fields: [id_objetivo_especifico], references: [id_objetivo_especifico], onDelete: NoAction, onUpdate: NoAction, map: "tarea_ibfk_1")
+  usuario                usuario             @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "tarea_ibfk_2")
+  estado                 estado              @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "tarea_ibfk_3")
+
+  @@index([id_estado], map: "id_estado")
+  @@index([id_objetivo_especifico], map: "id_objetivo_especifico")
+  @@index([id_responsable], map: "id_responsable")
+}
+
+model usuario {
+  id_usuario                Int                         @id @default(autoincrement())
+  nombre                    String                      @db.VarChar(150)
+  cargo                     String?                     @db.VarChar(100)
+  area                      String?                     @db.VarChar(100)
+  email                     String?                     @db.VarChar(150)
+  activo                    Boolean?                    @default(true)
+  created_at                DateTime?                   @default(now()) @db.Timestamp(0)
+  aprendizaje               aprendizaje[]
+  calendario_estrategico    calendario_estrategico[]
+  calendario_lideres        calendario_lideres[]
+  historial_cambios         historial_cambios[]
+  kpi                       kpi[]
+  objetivo_especifico       objetivo_especifico[]
+  objetivo_general          objetivo_general[]
+  objetivo_interdependencia objetivo_interdependencia[]
+  prioridad                 prioridad[]
+  repositorio_estrategico   repositorio_estrategico[]
+  repositorio_lideres       repositorio_lideres[]
+  resultado_clave           resultado_clave[]
+  tarea                     tarea[]
+}
