@@ -44,6 +44,22 @@ export class ResultadoClaveService {
     return this.model.update(id, data);
   }
 
+  async toggleFavorito(id, user) {
+    const existing = await this.model.findById(id);
+
+    if (!existing) {
+      throw new AppError("Resultado clave no encontrado", 404);
+    }
+
+    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+      throw new AppError("No autorizado", 403);
+    }
+
+    return this.model.update(id, {
+      favorito: !existing.favorito,
+    });
+  }
+
   async delete(id, user) {
     const existing = await this.model.findById(id);
 

@@ -16,5 +16,6 @@ router.post("/", controller.create);
 router.get("/", controller.getAll);
 router.put("/:id", controller.update);
 router.delete("/:id", controller.delete);
+router.patch("/:id/favorito", controller.toggleFavorito);
 
 export default router;

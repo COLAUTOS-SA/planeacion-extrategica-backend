@@ -53,6 +53,17 @@ export class ResultadoClaveController {
     }
   };
 
+  toggleFavorito = async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      const result = await this.service.toggleFavorito(id, req.user);
+
+      return successResponse(res, result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   delete = async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
