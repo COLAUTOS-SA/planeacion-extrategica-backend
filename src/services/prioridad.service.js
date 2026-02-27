@@ -46,13 +46,13 @@ export class PrioridadService {
       where.id_estado = estadoId;
     }
 
-    const data = await this.model.findAllByUser(userId, {
+    const data = await this.model.findAllByUser(user.id, {
       where,
       skip,
       take: limit,
     });
 
-    const total = await this.model.countByUser(userId, where);
+    const total = await this.model.countByUser(user.id, where);
 
     return {
       data,

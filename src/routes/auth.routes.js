@@ -15,8 +15,8 @@ const authController = new AuthController(authService);
 
 router.post(
   "/register",
-  authMiddleware,
-  authorizeRoles("super-admin"),
+  // authMiddleware,
+  // authorizeRoles("super-admin"),
   authController.register,
 );
 router.post("/login", authController.login);

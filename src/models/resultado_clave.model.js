@@ -13,15 +13,18 @@ export class ResultadoClaveModel {
     const { where, skip, take } = options;
 
     return prisma.resultado_clave.findMany({
-      where: {
-        id_responsable: userId,
-        ...where,
-      },
+      where,
       skip,
       take,
       orderBy: {
         fecha_creacion: "desc",
       },
+    });
+  }
+
+  async count(where) {
+    return prisma.resultado_clave.count({
+      where,
     });
   }
 

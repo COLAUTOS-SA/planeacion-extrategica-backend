@@ -11,15 +11,18 @@ export class AprendizajeModel {
     const { where, skip, take } = options;
 
     return prisma.aprendizaje.findMany({
-      where: {
-        id_responsable: userId,
-        ...where,
-      },
+      where,
       skip,
       take,
       orderBy: {
         fecha: "desc",
       },
+    });
+  }
+
+  async count(where) {
+    return prisma.resultado_clave.count({
+      where,
     });
   }
 

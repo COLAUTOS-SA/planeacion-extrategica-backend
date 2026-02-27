@@ -13,6 +13,9 @@ export class UserModel {
   async create(data) {
     return prisma.usuario.create({
       data,
+      include: {
+        rol: true,
+      },
     });
   }
 
