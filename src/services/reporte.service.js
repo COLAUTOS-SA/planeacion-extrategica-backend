@@ -17,6 +17,7 @@ export class ReporteService {
         id_usuario: true,
         nombre: true,
         email: true,
+        cargo: true,
       },
     });
   }

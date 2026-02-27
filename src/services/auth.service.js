@@ -54,6 +54,7 @@ export class AuthService {
         id: user.id_usuario,
         nombre: user.nombre,
         email: user.email,
+        cargo: user.cargo,
         rol: user.rol.nombre,
       },
       env.JWT_SECRET,
