@@ -3,6 +3,7 @@ import authRoutes from "./auth.routes.js";
 import resultadoRoutes from "./resultado_clave.routes.js";
 import aprendizajeRoutes from "./aprendizaje.routes.js";
 import prioridadRoutes from "./prioridad.route.js";
+import reporteRoutes from "./reporte.routes.js";
 
 const router = Router();
 
@@ -21,6 +22,8 @@ router.use("/auth", authRoutes);
 router.use("/resultados", resultadoRoutes);
 
 router.use("/aprendizajes", aprendizajeRoutes);
+
+router.use("/informes", reporteRoutes);
 
 router.use("/prioridades", prioridadRoutes);
 

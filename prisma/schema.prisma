@@ -14,6 +14,7 @@ model aprendizaje {
   comentarios    String?   @db.Text
   id_responsable Int
   id_estado      Int
+  favorito       Boolean?  @default(false)
   usuario        usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "aprendizaje_ibfk_1")
   estado         estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "aprendizaje_ibfk_2")
 
@@ -168,6 +169,7 @@ model prioridad {
   comentarios    String?   @db.Text
   id_responsable Int
   id_estado      Int
+  favorito       Boolean?  @default(false)
   usuario        usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "prioridad_ibfk_1")
   estado         estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "prioridad_ibfk_2")
 
