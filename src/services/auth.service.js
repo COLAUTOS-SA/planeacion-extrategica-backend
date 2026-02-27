@@ -21,6 +21,7 @@ export class AuthService {
     const user = await this.userModel.create({
       ...data,
       password: hashedPassword,
+      id_rol: data.id_rol,
     });
 
     return this.generateToken(user);
@@ -29,18 +30,18 @@ export class AuthService {
   async login(data) {
     const user = await this.userModel.findByEmail(data.email);
 
-    if (!user.activo) {
-      throw new AppError("Usuario inactivo", 403);
+    if (!user) {
+      throw new AppError("Credenciales inválidas", 400);
     }
 
-    if (!user) {
-      throw { status: 400, message: "Invalid credentials" };
+    if (!user.activo) {
+      throw new AppError("Usuario inactivo", 403);
     }
 
     const isMatch = await bcrypt.compare(data.password, user.password);
 
     if (!isMatch) {
-      throw { status: 400, message: "Invalid credentials" };
+      throw { status: 400, message: "Credenciales inválidas" };
     }
 
     return this.generateToken(user);
@@ -51,6 +52,7 @@ export class AuthService {
       {
         id: user.id_usuario,
         email: user.email,
+        rol: user.rol.nombre,
       },
       env.JWT_SECRET,
       { expiresIn: "1d" },

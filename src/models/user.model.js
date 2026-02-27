@@ -6,6 +6,7 @@ export class UserModel {
   async findByEmail(email) {
     return prisma.usuario.findFirst({
       where: { email },
+      include: { rol: true },
     });
   }
 

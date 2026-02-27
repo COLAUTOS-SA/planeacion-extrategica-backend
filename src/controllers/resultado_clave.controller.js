@@ -20,9 +20,9 @@ export class ResultadoClaveController {
   create = async (req, res, next) => {
     try {
       const data = createSchema.parse(req.body);
-      const userId = req.user.id;
+      const user = req.user;
 
-      const result = await this.service.create(data, userId);
+      const result = await this.service.create(data, user);
 
       return successResponse(res, result, "Creado correctamente", 201);
     } catch (error) {
@@ -32,7 +32,7 @@ export class ResultadoClaveController {
 
   getAll = async (req, res, next) => {
     try {
-      const result = await this.service.getAll(req.user.id, req.query);
+      const result = await this.service.getAll(req.user, req.query);
 
       return successResponse(res, result);
     } catch (error) {
@@ -43,9 +43,9 @@ export class ResultadoClaveController {
   update = async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
-      const userId = req.user.id;
+      const user = req.user;
 
-      const result = await this.service.update(id, req.body, userId);
+      const result = await this.service.update(id, req.body, user);
 
       return successResponse(res, result);
     } catch (error) {
@@ -56,9 +56,9 @@ export class ResultadoClaveController {
   delete = async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
-      const userId = req.user.id;
+      const user = req.user;
 
-      await this.service.delete(id, userId);
+      await this.service.delete(id, user);
 
       return successResponse(
         res,
@@ -74,7 +74,7 @@ export class ResultadoClaveController {
   getById = async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
-      const result = await this.service.getById(id, req.user.id);
+      const result = await this.service.getById(id, req.user);
 
       return successResponse(res, result);
     } catch (error) {

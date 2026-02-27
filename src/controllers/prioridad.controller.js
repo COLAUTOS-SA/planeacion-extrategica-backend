@@ -16,7 +16,7 @@ export class PrioridadController {
   create = async (req, res, next) => {
     try {
       const data = createSchema.parse(req.body);
-      const result = await this.service.create(data, req.user.id);
+      const result = await this.service.create(data, req.user);
 
       return successResponse(res, result, "Creado correctamente", 201);
     } catch (error) {
@@ -26,7 +26,7 @@ export class PrioridadController {
 
   getAll = async (req, res, next) => {
     try {
-      const result = await this.service.getAll(req.user.id, req.query);
+      const result = await this.service.getAll(req.user, req.query);
 
       return successResponse(res, result);
     } catch (error) {
@@ -37,7 +37,7 @@ export class PrioridadController {
   update = async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
-      const result = await this.service.update(id, req.body, req.user.id);
+      const result = await this.service.update(id, req.body, req.user);
 
       return successResponse(res, result);
     } catch (error) {
@@ -48,7 +48,7 @@ export class PrioridadController {
   delete = async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
-      await this.service.delete(id, req.user.id);
+      await this.service.delete(id, req.user);
 
       return successResponse(res, null, "Prioridad eliminada", 200);
     } catch (error) {

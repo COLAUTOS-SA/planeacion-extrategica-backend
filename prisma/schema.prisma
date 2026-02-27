@@ -164,7 +164,7 @@ model plan_alto_nivel {
 model prioridad {
   id_prioridad   Int       @id @default(autoincrement())
   descripcion    String    @db.Text
-  fecha          Date @db.Date
+  fecha          DateTime? @db.Date
   comentarios    String?   @db.Text
   id_responsable Int
   id_estado      Int
@@ -206,9 +206,9 @@ model repositorio_lideres {
 model resultado_clave {
   id_resultado   Int       @id @default(autoincrement())
   compromiso     String    @db.Text
-  fecha_creacion DateTime? @db.Date
-  fecha_inicio   Date @db.Date
-  fecha_fin      Date @db.Date
+  fecha_creacion DateTime? @db.DateTime(0)
+  fecha_inicio   DateTime? @db.Date
+  fecha_fin      DateTime? @db.Date
   comentarios    String?   @db.Text
   favorito       Boolean?  @default(false)
   id_responsable Int
@@ -218,6 +218,12 @@ model resultado_clave {
 
   @@index([id_estado], map: "id_estado")
   @@index([id_responsable], map: "id_responsable")
+}
+
+model rol {
+  id_rol  Int       @id @default(autoincrement())
+  nombre  String    @unique(map: "nombre") @db.VarChar(50)
+  usuario usuario[]
 }
 
 model tarea {
@@ -245,6 +251,7 @@ model usuario {
   activo                    Boolean?                    @default(true)
   created_at                DateTime?                   @default(now()) @db.Timestamp(0)
   password                  String                      @db.VarChar(255)
+  id_rol                    Int
   aprendizaje               aprendizaje[]
   calendario_estrategico    calendario_estrategico[]
   calendario_lideres        calendario_lideres[]
@@ -258,4 +265,7 @@ model usuario {
   repositorio_lideres       repositorio_lideres[]
   resultado_clave           resultado_clave[]
   tarea                     tarea[]
+  rol                       rol                         @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
+
+  @@index([id_rol], map: "fk_usuario_rol")
 }

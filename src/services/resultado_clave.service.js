@@ -10,7 +10,7 @@ export class ResultadoClaveService {
     this.model = model;
   }
 
-  async create(data, userId) {
+  async create(data, user) {
     if (!(await estadoModel.exists(data.id_estado))) {
       throw new AppError("Estado no válido", 400);
     }
@@ -19,16 +19,12 @@ export class ResultadoClaveService {
       ...data,
       fecha_inicio: data.fecha_inicio ? new Date(data.fecha_inicio) : null,
       fecha_fin: data.fecha_fin ? new Date(data.fecha_fin) : null,
-      id_responsable: userId,
+      id_responsable: user.id,
       fecha_creacion: new Date(),
     });
   }
 
-  async getAll(userId) {
-    return this.model.findAllByUser(userId);
-  }
-
-  async update(id, data, userId) {
+  async update(id, data, user) {
     if (data.id_estado) {
       if (!(await estadoModel.exists(data.id_estado))) {
         throw new AppError("Estado no válido", 400);
@@ -41,42 +37,42 @@ export class ResultadoClaveService {
       throw { status: 404, message: "Resultado clave no encontrado" };
     }
 
-    if (existing.id_responsable !== userId) {
-      throw { status: 403, message: "No autorizado" };
+    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+      throw new AppError("No autorizado", 403);
     }
 
     return this.model.update(id, data);
   }
 
-  async delete(id, userId) {
+  async delete(id, user) {
     const existing = await this.model.findById(id);
 
     if (!existing) {
       throw { status: 404, message: "Resultado clave no encontrado" };
     }
 
-    if (existing.id_responsable !== userId) {
-      throw { status: 403, message: "No autorizado" };
+    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+      throw new AppError("No autorizado", 403);
     }
 
     return this.model.delete(id);
   }
 
-  async getById(id, userId) {
+  async getById(id, user) {
     const existing = await this.model.findById(id);
 
     if (!existing) {
       throw new AppError("Resultado clave no encontrado", 404);
     }
 
-    if (existing.id_responsable !== userId) {
+    if (user.rol === "lider" && existing.id_responsable !== user.id) {
       throw new AppError("No autorizado", 403);
     }
 
     return existing;
   }
 
-  async getAll(userId, query) {
+  async getAll(user, query) {
     const page = parseInt(query.page) || 1;
     const limit = parseInt(query.limit) || 10;
 
@@ -87,6 +83,10 @@ export class ResultadoClaveService {
     const skip = (page - 1) * limit;
 
     const where = {};
+
+    if (user.rol === "lider") {
+      where.id_responsable = user.id;
+    }
 
     if (query.estado) {
       const estadoId = parseInt(query.estado);
