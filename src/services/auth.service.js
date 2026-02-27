@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
+import { AppError } from "../utils/AppError.js";
 
 export class AuthService {
   constructor(userModel) {
@@ -51,6 +52,7 @@ export class AuthService {
     return jwt.sign(
       {
         id: user.id_usuario,
+        nombre: user.nombre,
         email: user.email,
         rol: user.rol.nombre,
       },
