@@ -32,6 +32,9 @@ export class ReporteService {
         id_responsable: liderId,
         favorito: true,
       },
+      include: {
+        estado: true,
+      },
     });
 
     const prioridades = await prisma.prioridad.findMany({
@@ -39,12 +42,18 @@ export class ReporteService {
         id_responsable: liderId,
         favorito: true,
       },
+      include: {
+        estado: true,
+      },
     });
 
     const aprendizajes = await prisma.aprendizaje.findMany({
       where: {
         id_responsable: liderId,
         favorito: true,
+      },
+      include: {
+        estado: true,
       },
     });
 
