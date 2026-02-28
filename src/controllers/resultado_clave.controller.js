@@ -5,6 +5,7 @@ import { successResponse } from "../utils/response.js";
 
 const createSchema = z.object({
   compromiso: z.string().min(3),
+  nombre_responsable: z.string().min(3),
   fecha_inicio: z.string().optional(),
   fecha_fin: z.string().optional(),
   comentarios: z.string().optional(),

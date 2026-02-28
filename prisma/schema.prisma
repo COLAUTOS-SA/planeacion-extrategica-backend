@@ -8,15 +8,16 @@ datasource db {
 }
 
 model aprendizaje {
-  id_aprendizaje Int       @id @default(autoincrement())
-  descripcion    String    @db.Text
-  fecha          DateTime? @db.Date
-  comentarios    String?   @db.Text
-  id_responsable Int
-  id_estado      Int
-  favorito       Boolean?  @default(false)
-  usuario        usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "aprendizaje_ibfk_1")
-  estado         estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "aprendizaje_ibfk_2")
+  id_aprendizaje     Int       @id @default(autoincrement())
+  descripcion        String    @db.Text
+  fecha              DateTime? @db.Date
+  comentarios        String?   @db.Text
+  id_responsable     Int
+  id_estado          Int
+  favorito           Boolean?  @default(false)
+  nombre_responsable String?   @db.VarChar(150)
+  usuario            usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "aprendizaje_ibfk_1")
+  estado             estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "aprendizaje_ibfk_2")
 
   @@index([id_estado], map: "id_estado")
   @@index([id_responsable], map: "id_responsable")
@@ -163,15 +164,16 @@ model plan_alto_nivel {
 }
 
 model prioridad {
-  id_prioridad   Int       @id @default(autoincrement())
-  descripcion    String    @db.Text
-  fecha          DateTime? @db.Date
-  comentarios    String?   @db.Text
-  id_responsable Int
-  id_estado      Int
-  favorito       Boolean?  @default(false)
-  usuario        usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "prioridad_ibfk_1")
-  estado         estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "prioridad_ibfk_2")
+  id_prioridad       Int       @id @default(autoincrement())
+  descripcion        String    @db.Text
+  fecha              DateTime? @db.Date
+  comentarios        String?   @db.Text
+  id_responsable     Int
+  id_estado          Int
+  favorito           Boolean?  @default(false)
+  nombre_responsable String?   @db.VarChar(150)
+  usuario            usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "prioridad_ibfk_1")
+  estado             estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "prioridad_ibfk_2")
 
   @@index([id_estado], map: "id_estado")
   @@index([id_responsable], map: "id_responsable")
@@ -206,17 +208,18 @@ model repositorio_lideres {
 }
 
 model resultado_clave {
-  id_resultado   Int       @id @default(autoincrement())
-  compromiso     String    @db.Text
-  fecha_creacion DateTime? @db.DateTime(0)
-  fecha_inicio   DateTime? @db.Date
-  fecha_fin      DateTime? @db.Date
-  comentarios    String?   @db.Text
-  favorito       Boolean?  @default(false)
-  id_responsable Int
-  id_estado      Int
-  usuario        usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "resultado_clave_ibfk_1")
-  estado         estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "resultado_clave_ibfk_2")
+  id_resultado       Int       @id @default(autoincrement())
+  compromiso         String    @db.Text
+  fecha_creacion     DateTime? @db.DateTime(0)
+  fecha_inicio       DateTime? @db.Date
+  fecha_fin          DateTime? @db.Date
+  comentarios        String?   @db.Text
+  favorito           Boolean?  @default(false)
+  id_responsable     Int
+  id_estado          Int
+  nombre_responsable String?   @db.VarChar(150)
+  usuario            usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "resultado_clave_ibfk_1")
+  estado             estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "resultado_clave_ibfk_2")
 
   @@index([id_estado], map: "id_estado")
   @@index([id_responsable], map: "id_responsable")
