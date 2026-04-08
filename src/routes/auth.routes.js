@@ -6,6 +6,7 @@ import { AuthService } from "../services/auth.service.js";
 import { AuthController } from "../controllers/auth.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
+import multer from "multer";
 
 const router = Router();
 
@@ -13,12 +14,19 @@ const userModel = new UserModel();
 const authService = new AuthService(userModel);
 const authController = new AuthController(authService);
 
+const upload = multer({
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
+
 router.post(
   "/register",
+  upload.single("avatar"),
   // authMiddleware,
   // authorizeRoles("super-admin"),
   authController.register,
 );
 router.post("/login", authController.login);
+
+router.put("/change-password", authMiddleware, authController.changePassword);
 
 export default router;

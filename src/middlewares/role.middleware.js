@@ -2,10 +2,16 @@ import { AppError } from "../utils/AppError.js";
 
 export const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
-    const userRole = req.user.rol;
+    const userRoles = req.user.roles; // array
 
-    if (!allowedRoles.includes(userRole)) {
-      throw new AppError("No tienes permisos para esta acción", 403);
+    if (!userRoles || userRoles.length === 0) {
+      return res.status(403).json({ message: "Sin roles asignados" });
+    }
+
+    const hasAccess = userRoles.some((role) => allowedRoles.includes(role));
+
+    if (!hasAccess) {
+      return res.status(403).json({ message: "No autorizado" });
     }
 
     next();

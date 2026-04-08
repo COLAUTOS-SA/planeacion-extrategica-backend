@@ -3,14 +3,20 @@ import { AppError } from "../utils/AppError.js";
 
 export class ReporteService {
   async getLideres(user) {
-    if (user.rol !== "admin") {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (!userRoles.includes("admin")) {
       throw new AppError("No autorizado", 403);
     }
 
     return prisma.usuario.findMany({
       where: {
-        rol: {
-          nombre: "lider",
+        usuarios_roles: {
+          some: {
+            rol: {
+              nombre: "lider",
+            },
+          },
         },
       },
       select: {
@@ -18,12 +24,16 @@ export class ReporteService {
         nombre: true,
         email: true,
         cargo: true,
+        area: true,
+        foto_url: true,
       },
     });
   }
 
   async getFavoritosByLider(user, liderId) {
-    if (user.rol !== "admin") {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (!userRoles.includes("admin")) {
       throw new AppError("No autorizado", 403);
     }
 
