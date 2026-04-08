@@ -20,6 +20,8 @@ router.get("/:id", controller.getById);
 router.post("/", controller.create);
 router.patch("/:id", controller.update);
 router.delete("/:id", controller.delete);
-router.post("/valores", controller.saveValores);
+router.post("/valores", controller.saveValor);
+router.patch("/valores/:idValor", controller.updateValor);
+router.delete("/valores/:idValor", controller.deleteValor);
 
 export default router;

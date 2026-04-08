@@ -5,6 +5,19 @@ import { KpiService } from "../services/kpi.service.js";
 
 const service = new KpiService(new KpiModel());
 
+const campoSchema = z.object({
+  id_campo: z.number().int().optional(),
+  nombre: z.string().optional(),
+  tipo: z.enum(["numero", "porcentaje", "texto"]).optional(),
+  orden: z.number().int().optional(),
+  requerido: z.boolean().optional(),
+  editable: z.boolean().optional(),
+  es_calculado: z.boolean().optional(),
+  formula: z.string().nullable().optional(),
+  valor_decimal: z.union([z.number(), z.string(), z.null()]).optional(),
+  valor_texto: z.string().nullable().optional(),
+});
+
 const createUpdateSchema = z.object({
   titulo: z.string().optional(),
   proceso: z.string().optional().nullable(),
@@ -21,22 +34,28 @@ const createUpdateSchema = z.object({
         z.string(),
         z.object({
           nombre: z.string(),
+          campos: z.array(campoSchema).optional(),
         }),
       ]),
     )
     .optional(),
 });
 
-const valoresSchema = z.object({
+const valorSchema = z.object({
+  id_indicador: z.number().int(),
+  id_sede: z.number().int().nullable().optional(),
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  valores: z.array(
-    z.object({
-      id_indicador: z.number().int(),
-      id_sede: z.number().int().nullable().optional(),
-      objetivo: z.union([z.number(), z.string(), z.null()]).optional(),
-      resultado: z.union([z.number(), z.string(), z.null()]).optional(),
-    }),
-  ),
+  objetivo: z.union([z.number(), z.string(), z.null()]).optional(),
+  resultado: z.union([z.number(), z.string(), z.null()]).optional(),
+  campos: z.array(campoSchema).optional(),
+});
+
+const valorUpdateSchema = z.object({
+  id_sede: z.number().int().nullable().optional(),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  objetivo: z.union([z.number(), z.string(), z.null()]).optional(),
+  resultado: z.union([z.number(), z.string(), z.null()]).optional(),
+  campos: z.array(campoSchema).optional(),
 });
 
 const usuarioSedesSchema = z.object({
@@ -103,11 +122,32 @@ export class KpiController {
     }
   };
 
-  saveValores = async (req, res, next) => {
+  saveValor = async (req, res, next) => {
     try {
-      const payload = valoresSchema.parse(req.body);
-      const data = await service.saveValores(payload, req.user);
-      return successResponse(res, data, "Valores registrados correctamente");
+      const payload = valorSchema.parse(req.body);
+      const data = await service.saveValor(payload, req.user);
+      return successResponse(res, data, "Valor registrado correctamente");
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateValor = async (req, res, next) => {
+    try {
+      const idValor = Number(req.params.idValor);
+      const payload = valorUpdateSchema.parse(req.body);
+      const data = await service.updateValor(idValor, payload, req.user);
+      return successResponse(res, data, "Valor actualizado correctamente");
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteValor = async (req, res, next) => {
+    try {
+      const idValor = Number(req.params.idValor);
+      const data = await service.deleteValor(idValor, req.user);
+      return successResponse(res, data, "Valor eliminado correctamente");
     } catch (error) {
       next(error);
     }
@@ -134,3 +174,4 @@ export class KpiController {
     }
   };
 }
+

@@ -120,28 +120,69 @@ model kpi_sede {
 }
 
 model kpi_indicador {
-  id_indicador Int         @id @default(autoincrement())
-  id_kpi       Int
-  nombre       String      @db.VarChar(150)
-  kpi          kpi         @relation(fields: [id_kpi], references: [id_kpi], onDelete: Restrict, onUpdate: Restrict, map: "kpi_indicador_ibfk_1")
-  kpi_valor    kpi_valor[]
+  id_indicador        Int                  @id @default(autoincrement())
+  id_kpi              Int
+  nombre              String               @db.VarChar(150)
+  kpi                 kpi                  @relation(fields: [id_kpi], references: [id_kpi], onDelete: Restrict, onUpdate: Restrict, map: "kpi_indicador_ibfk_1")
+  kpi_indicador_campo kpi_indicador_campo[]
+  kpi_valor           kpi_valor[]
 
   @@index([id_kpi], map: "id_kpi")
 }
 
-model kpi_valor {
-  id_valor      Int           @id @default(autoincrement())
+model kpi_indicador_campo {
+  id_campo      Int          @id @default(autoincrement())
   id_indicador  Int
-  id_sede       Int?
-  fecha         DateTime      @db.Date
-  objetivo      Decimal?      @db.Decimal(10, 2)
-  resultado     Decimal?      @db.Decimal(10, 2)
-  kpi_indicador kpi_indicador @relation(fields: [id_indicador], references: [id_indicador], onDelete: Restrict, onUpdate: Restrict, map: "kpi_valor_ibfk_1")
-  sede          sede?         @relation(fields: [id_sede], references: [id_sede], onDelete: Restrict, onUpdate: Restrict, map: "kpi_valor_ibfk_2")
+  nombre        String       @db.VarChar(120)
+  tipo          kpi_campo_tipo @default(numero)
+  orden         Int          @default(1)
+  requerido     Boolean      @default(false)
+  editable      Boolean      @default(true)
+  es_calculado  Boolean      @default(false)
+  formula       String?      @db.VarChar(255)
+  kpi_indicador kpi_indicador @relation(fields: [id_indicador], references: [id_indicador], onDelete: Restrict, onUpdate: Restrict, map: "kpi_indicador_campo_ibfk_1")
+  kpi_valor_campo kpi_valor_campo[]
+
+  @@index([id_indicador], map: "id_indicador")
+}
+
+model kpi_valor {
+  id_valor        Int               @id @default(autoincrement())
+  id_indicador    Int
+  id_sede         Int?
+  fecha           DateTime          @db.Date
+  objetivo        Decimal?          @db.Decimal(10, 2)
+  resultado       Decimal?          @db.Decimal(10, 2)
+  created_by      Int?
+  updated_at      DateTime?         @db.Timestamp(0)
+  updated_by      Int?
+  deleted_at      DateTime?         @db.Timestamp(0)
+  deleted_by      Int?
+  kpi_indicador   kpi_indicador     @relation(fields: [id_indicador], references: [id_indicador], onDelete: Restrict, onUpdate: Restrict, map: "kpi_valor_ibfk_1")
+  sede            sede?             @relation(fields: [id_sede], references: [id_sede], onDelete: Restrict, onUpdate: Restrict, map: "kpi_valor_ibfk_2")
+  creador         usuario?          @relation("kpi_valor_created_by", fields: [created_by], references: [id_usuario], onDelete: Restrict, onUpdate: Restrict, map: "fk_kpi_valor_created_by")
+  actualizador    usuario?          @relation("kpi_valor_updated_by", fields: [updated_by], references: [id_usuario], onDelete: Restrict, onUpdate: Restrict, map: "fk_kpi_valor_updated_by")
+  eliminador      usuario?          @relation("kpi_valor_deleted_by", fields: [deleted_by], references: [id_usuario], onDelete: Restrict, onUpdate: Restrict, map: "fk_kpi_valor_deleted_by")
+  kpi_valor_campo kpi_valor_campo[]
 
   @@index([id_indicador], map: "id_indicador")
   @@index([id_sede], map: "id_sede")
+  @@index([created_by], map: "fk_kpi_valor_created_by")
+  @@index([updated_by], map: "fk_kpi_valor_updated_by")
+  @@index([deleted_by], map: "fk_kpi_valor_deleted_by")
   @@unique([id_indicador, id_sede, fecha], map: "uk_kpi_valor_indicador_sede_fecha")
+}
+
+model kpi_valor_campo {
+  id_valor       Int
+  id_campo       Int
+  valor_decimal  Decimal?            @db.Decimal(14, 4)
+  valor_texto    String?             @db.Text
+  kpi_valor      kpi_valor           @relation(fields: [id_valor], references: [id_valor], onDelete: Cascade, onUpdate: Restrict, map: "kpi_valor_campo_ibfk_1")
+  campo          kpi_indicador_campo @relation(fields: [id_campo], references: [id_campo], onDelete: Restrict, onUpdate: Restrict, map: "kpi_valor_campo_ibfk_2")
+
+  @@id([id_valor, id_campo])
+  @@index([id_campo], map: "id_campo")
 }
 
 model negocio {
@@ -350,6 +391,9 @@ model usuario {
   rol                       rol                         @relation(fields: [id_rol], references: [id_rol], onUpdate: Restrict, map: "fk_usuario_rol")
   usuarios_roles            usuarios_roles[]
   usuario_sede             usuario_sede[]
+  kpi_valor_creados        kpi_valor[]                  @relation("kpi_valor_created_by")
+  kpi_valor_actualizados   kpi_valor[]                  @relation("kpi_valor_updated_by")
+  kpi_valor_eliminados     kpi_valor[]                  @relation("kpi_valor_deleted_by")
 
   @@index([id_rol], map: "fk_usuario_rol")
 }
@@ -391,4 +435,10 @@ enum evidencia_tipo {
 enum kpi_tipo {
   individual
   regional
+}
+
+enum kpi_campo_tipo {
+  numero
+  porcentaje
+  texto
 }

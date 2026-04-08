@@ -1,61 +1,6 @@
 import { prisma } from "../config/database.js";
 
 export class KpiModel {
-  async findAll(where = {}) {
-    return prisma.kpi.findMany({
-      where,
-      orderBy: { created_at: "desc" },
-      include: {
-        usuario: {
-          select: {
-            id_usuario: true,
-            nombre: true,
-            email: true,
-          },
-        },
-        kpi_sede: {
-          include: {
-            sede: true,
-          },
-        },
-        kpi_indicador: {
-          orderBy: { id_indicador: "asc" },
-        },
-      },
-    });
-  }
-
-  async findById(idKpi) {
-    return prisma.kpi.findUnique({
-      where: { id_kpi: idKpi },
-      include: {
-        usuario: {
-          select: {
-            id_usuario: true,
-            nombre: true,
-            email: true,
-          },
-        },
-        kpi_sede: {
-          include: {
-            sede: true,
-          },
-        },
-        kpi_indicador: {
-          include: {
-            kpi_valor: {
-              include: {
-                sede: true,
-              },
-              orderBy: [{ fecha: "desc" }, { id_valor: "desc" }],
-            },
-          },
-          orderBy: { id_indicador: "asc" },
-        },
-      },
-    });
-  }
-
   async findSedes() {
     return prisma.sede.findMany({
       orderBy: { nombre: "asc" },
@@ -78,11 +23,114 @@ export class KpiModel {
     if (!sedes.length) return;
 
     await prisma.usuario_sede.createMany({
-      data: sedes.map((idSede) => ({
-        id_usuario: idUsuario,
-        id_sede: idSede,
-      })),
+      data: sedes.map((idSede) => ({ id_usuario: idUsuario, id_sede: idSede })),
       skipDuplicates: true,
+    });
+  }
+
+  async findAll(where = {}) {
+    return prisma.kpi.findMany({
+      where,
+      orderBy: { created_at: "desc" },
+      include: {
+        usuario: {
+          select: {
+            id_usuario: true,
+            nombre: true,
+            email: true,
+          },
+        },
+        kpi_sede: {
+          include: { sede: true },
+        },
+        kpi_indicador: {
+          include: {
+            kpi_indicador_campo: {
+              orderBy: { orden: "asc" },
+            },
+          },
+          orderBy: { id_indicador: "asc" },
+        },
+      },
+    });
+  }
+
+  async findById(idKpi) {
+    return prisma.kpi.findUnique({
+      where: { id_kpi: idKpi },
+      include: {
+        usuario: {
+          select: {
+            id_usuario: true,
+            nombre: true,
+            email: true,
+          },
+        },
+        kpi_sede: {
+          include: { sede: true },
+        },
+        kpi_indicador: {
+          include: {
+            kpi_indicador_campo: {
+              orderBy: { orden: "asc" },
+            },
+            kpi_valor: {
+              where: {
+                deleted_at: null,
+              },
+              include: {
+                sede: true,
+                kpi_valor_campo: {
+                  include: {
+                    campo: true,
+                  },
+                },
+              },
+              orderBy: [{ fecha: "desc" }, { id_valor: "desc" }],
+            },
+          },
+          orderBy: { id_indicador: "asc" },
+        },
+      },
+    });
+  }
+
+  async findIndicadorById(idIndicador) {
+    return prisma.kpi_indicador.findUnique({
+      where: { id_indicador: idIndicador },
+      include: {
+        kpi: {
+          include: {
+            kpi_sede: true,
+          },
+        },
+        kpi_indicador_campo: true,
+      },
+    });
+  }
+
+  async findValorById(idValor) {
+    return prisma.kpi_valor.findUnique({
+      where: { id_valor: idValor },
+      include: {
+        kpi_indicador: {
+          include: {
+            kpi: true,
+          },
+        },
+        kpi_valor_campo: true,
+      },
+    });
+  }
+
+  async findValorByUniqueTuple(idIndicador, fecha, idSede) {
+    return prisma.kpi_valor.findFirst({
+      where: {
+        id_indicador: idIndicador,
+        fecha,
+        id_sede: idSede ?? null,
+        deleted_at: null,
+      },
     });
   }
 
@@ -111,60 +159,102 @@ export class KpiModel {
     if (!sedes.length) return;
 
     await prisma.kpi_sede.createMany({
-      data: sedes.map((idSede) => ({
-        id_kpi: idKpi,
-        id_sede: idSede,
-      })),
+      data: sedes.map((idSede) => ({ id_kpi: idKpi, id_sede: idSede })),
       skipDuplicates: true,
     });
   }
 
-  async replaceIndicadores(idKpi, indicadores) {
+  async replaceIndicadoresWithCampos(idKpi, indicadores) {
     await prisma.kpi_indicador.deleteMany({
       where: { id_kpi: idKpi },
     });
 
-    if (!indicadores.length) return;
-
-    await prisma.kpi_indicador.createMany({
-      data: indicadores.map((nombre) => ({
-        id_kpi: idKpi,
-        nombre,
-      })),
-    });
-  }
-
-  async findIndicadorById(idIndicador) {
-    return prisma.kpi_indicador.findUnique({
-      where: { id_indicador: idIndicador },
-      include: {
-        kpi: {
-          include: {
-            kpi_sede: true,
-          },
+    for (const indicador of indicadores) {
+      const created = await prisma.kpi_indicador.create({
+        data: {
+          id_kpi: idKpi,
+          nombre: indicador.nombre,
         },
-      },
+      });
+
+      if (indicador.campos?.length) {
+        await prisma.kpi_indicador_campo.createMany({
+          data: indicador.campos.map((campo, index) => ({
+            id_indicador: created.id_indicador,
+            nombre: campo.nombre,
+            tipo: campo.tipo || "numero",
+            orden: campo.orden || index + 1,
+            requerido: Boolean(campo.requerido),
+            editable: campo.editable !== false,
+            es_calculado: Boolean(campo.es_calculado),
+            formula: campo.formula || null,
+          })),
+        });
+      }
+    }
+  }
+
+  async createValor(data, campos = []) {
+    return prisma.$transaction(async (tx) => {
+      const created = await tx.kpi_valor.create({ data });
+
+      if (campos.length) {
+        await tx.kpi_valor_campo.createMany({
+          data: campos.map((campo) => ({
+            id_valor: created.id_valor,
+            id_campo: campo.id_campo,
+            valor_decimal: campo.valor_decimal ?? null,
+            valor_texto: campo.valor_texto ?? null,
+          })),
+        });
+      }
+
+      return created;
     });
   }
 
-  async findValorByUniqueTuple(idIndicador, fecha, idSede) {
-    return prisma.kpi_valor.findFirst({
-      where: {
-        id_indicador: idIndicador,
-        fecha,
-        id_sede: idSede ?? null,
-      },
+  async updateValor(idValor, data, campos = []) {
+    return prisma.$transaction(async (tx) => {
+      const updated = await tx.kpi_valor.update({
+        where: { id_valor: idValor },
+        data,
+      });
+
+      if (campos.length) {
+        for (const campo of campos) {
+          await tx.kpi_valor_campo.upsert({
+            where: {
+              id_valor_id_campo: {
+                id_valor: idValor,
+                id_campo: campo.id_campo,
+              },
+            },
+            update: {
+              valor_decimal: campo.valor_decimal ?? null,
+              valor_texto: campo.valor_texto ?? null,
+            },
+            create: {
+              id_valor: idValor,
+              id_campo: campo.id_campo,
+              valor_decimal: campo.valor_decimal ?? null,
+              valor_texto: campo.valor_texto ?? null,
+            },
+          });
+        }
+      }
+
+      return updated;
     });
   }
 
-  async createValor(data) {
-    return prisma.kpi_valor.create({ data });
-  }
-
-  async updateValor(idValor, data) {
+  async softDeleteValor(idValor, userId) {
     return prisma.kpi_valor.update({
       where: { id_valor: idValor },
-      data,
+      data: {
+        deleted_at: new Date(),
+        deleted_by: userId,
+      },
     });
   }
 }
+

@@ -37,11 +37,20 @@ export class KpiService {
     this.model = model;
   }
 
+  assertKpiReadableByUser(kpi, user) {
+    const roles = normalizeRoles(user);
+    if (isAdminLike(roles)) return;
+
+    if (kpi.id_responsable === user.id) return;
+
+    throw new AppError("No autorizado para consultar este KPI", 403);
+  }
+
   assertKpiEditableByUser(kpi, user) {
     const roles = normalizeRoles(user);
     if (isAdminLike(roles)) return;
 
-    if (roles.includes("lider") && kpi.id_responsable === user.id) return;
+    if (kpi.id_responsable === user.id) return;
 
     throw new AppError("No autorizado", 403);
   }
@@ -50,7 +59,11 @@ export class KpiService {
     if (!Array.isArray(sedes)) {
       throw new AppError("El campo sedes debe ser un arreglo", 400);
     }
-    return [...new Set(sedes.map((id) => Number(id)).filter((id) => Number.isInteger(id)))];
+    return [
+      ...new Set(
+        sedes.map((id) => Number(id)).filter((id) => Number.isInteger(id)),
+      ),
+    ];
   }
 
   normalizeIndicadores(indicadores = []) {
@@ -59,42 +72,77 @@ export class KpiService {
     }
 
     const parsed = indicadores
-      .map((item) => (typeof item === "string" ? item : item?.nombre || ""))
-      .map((name) => name.trim())
-      .filter(Boolean);
+      .map((item) => {
+        if (typeof item === "string") {
+          return {
+            nombre: item.trim(),
+            campos: [
+              { nombre: "Objetivo", tipo: "numero", requerido: false },
+              { nombre: "Resultado", tipo: "numero", requerido: false },
+            ],
+          };
+        }
 
-    return [...new Set(parsed)];
+        return {
+          nombre: String(item?.nombre || "").trim(),
+          campos: Array.isArray(item?.campos)
+            ? item.campos
+                .map((campo, index) => ({
+                  nombre: String(campo?.nombre || "").trim(),
+                  tipo: campo?.tipo || "numero",
+                  orden: campo?.orden || index + 1,
+                  requerido: Boolean(campo?.requerido),
+                  editable: campo?.editable !== false,
+                  es_calculado: Boolean(campo?.es_calculado),
+                  formula: campo?.formula || null,
+                }))
+                .filter((campo) => campo.nombre)
+            : [],
+        };
+      })
+      .filter((item) => item.nombre);
+
+    return parsed.map((item) => ({
+      ...item,
+      campos:
+        item.campos.length > 0
+          ? item.campos
+          : [
+              { nombre: "Objetivo", tipo: "numero", requerido: false },
+              { nombre: "Resultado", tipo: "numero", requerido: false },
+            ],
+    }));
   }
 
-  async getAllowedSedeIds(user) {
-    const roles = normalizeRoles(user);
-    if (isAdminLike(roles)) return null;
+  normalizeValorCampos(campos = [], availableCampos = []) {
+    if (!Array.isArray(campos)) {
+      throw new AppError("El campo campos debe ser un arreglo", 400);
+    }
 
-    const rows = await this.model.findUserSedes(user.id);
-    return rows.map((row) => row.id_sede);
-  }
-
-  filterKpiByAllowedSedes(kpi, allowedSedeIds) {
-    if (!Array.isArray(allowedSedeIds)) return kpi;
-
-    const allowed = new Set(allowedSedeIds);
-
-    const filteredSedes = (kpi.kpi_sede || []).filter((item) =>
-      allowed.has(item.id_sede),
+    const allowed = new Map(
+      availableCampos.map((campo) => [campo.id_campo, campo]),
     );
 
-    const filteredIndicadores = (kpi.kpi_indicador || []).map((indicador) => ({
-      ...indicador,
-      kpi_valor: (indicador.kpi_valor || []).filter(
-        (valor) => valor.id_sede === null || allowed.has(valor.id_sede),
-      ),
-    }));
+    return campos.map((campo) => {
+      const idCampo = Number(campo.id_campo);
+      const source = allowed.get(idCampo);
+      if (!source) {
+        throw new AppError(`Campo inválido: ${campo.id_campo}`, 400);
+      }
 
-    return {
-      ...kpi,
-      kpi_sede: filteredSedes,
-      kpi_indicador: filteredIndicadores,
-    };
+      return {
+        id_campo: idCampo,
+        valor_decimal: parseDecimal(campo.valor_decimal, source.nombre),
+        valor_texto:
+          campo.valor_texto === undefined || campo.valor_texto === null
+            ? null
+            : String(campo.valor_texto),
+      };
+    });
+  }
+
+  async getSedes() {
+    return this.model.findSedes();
   }
 
   async getUsuarioSedes(idUsuarioRequest, user) {
@@ -102,7 +150,6 @@ export class KpiService {
     if (!canManageUserSedes(roles) && user.id !== idUsuarioRequest) {
       throw new AppError("No autorizado", 403);
     }
-
     return this.model.findUserSedes(idUsuarioRequest);
   }
 
@@ -111,7 +158,6 @@ export class KpiService {
     if (!canManageUserSedes(roles)) {
       throw new AppError("No autorizado", 403);
     }
-
     const parsedSedes = this.normalizeSedes(sedes);
     if (!parsedSedes.length) {
       throw new AppError("Debes asignar al menos una sede", 400);
@@ -121,25 +167,10 @@ export class KpiService {
     return this.model.findUserSedes(idUsuarioRequest);
   }
 
-  async getSedes() {
-    return this.model.findSedes();
-  }
-
   async getAll(user) {
     const roles = normalizeRoles(user);
-    const where = {};
-    const allowedSedeIds = await this.getAllowedSedeIds(user);
-
-    if (roles.includes("lider") && !isAdminLike(roles)) {
-      where.id_responsable = user.id;
-    }
-
-    const rows = await this.model.findAll(where);
-    const filtered = rows
-      .map((row) => this.filterKpiByAllowedSedes(row, allowedSedeIds))
-      .filter((row) => !Array.isArray(allowedSedeIds) || row.kpi_sede.length > 0);
-
-    return filtered;
+    const where = isAdminLike(roles) ? {} : { id_responsable: user.id };
+    return this.model.findAll(where);
   }
 
   async getById(idKpi, user) {
@@ -148,15 +179,8 @@ export class KpiService {
       throw new AppError("KPI no encontrado", 404);
     }
 
-    this.assertKpiEditableByUser(kpi, user);
-    const allowedSedeIds = await this.getAllowedSedeIds(user);
-    const filtered = this.filterKpiByAllowedSedes(kpi, allowedSedeIds);
-
-    if (Array.isArray(allowedSedeIds) && filtered.kpi_sede.length === 0) {
-      throw new AppError("No autorizado para consultar este KPI", 403);
-    }
-
-    return filtered;
+    this.assertKpiReadableByUser(kpi, user);
+    return kpi;
   }
 
   async create(payload, user) {
@@ -168,12 +192,12 @@ export class KpiService {
       throw new AppError("El título es obligatorio", 400);
     }
 
-    if (!indicadores.length) {
-      throw new AppError("Debes enviar al menos un indicador", 400);
-    }
-
     if (!sedes.length) {
       throw new AppError("Debes asignar al menos una sede", 400);
+    }
+
+    if (!indicadores.length) {
+      throw new AppError("Debes enviar al menos un indicador", 400);
     }
 
     let idResponsable = Number(payload.id_responsable);
@@ -183,15 +207,6 @@ export class KpiService {
 
     if (!isAdminLike(roles) && idResponsable !== user.id) {
       throw new AppError("No autorizado para asignar otro responsable", 403);
-    }
-
-    if (!isAdminLike(roles)) {
-      const allowedSedeIds = await this.getAllowedSedeIds(user);
-      const allowed = new Set(allowedSedeIds || []);
-      const invalid = sedes.filter((idSede) => !allowed.has(idSede));
-      if (invalid.length) {
-        throw new AppError("Hay sedes no permitidas para el usuario", 403);
-      }
     }
 
     const created = await this.model.create({
@@ -207,7 +222,7 @@ export class KpiService {
     });
 
     await this.model.replaceKpiSedes(created.id_kpi, sedes);
-    await this.model.replaceIndicadores(created.id_kpi, indicadores);
+    await this.model.replaceIndicadoresWithCampos(created.id_kpi, indicadores);
 
     return this.model.findById(created.id_kpi);
   }
@@ -217,7 +232,6 @@ export class KpiService {
     if (!kpi) {
       throw new AppError("KPI no encontrado", 404);
     }
-
     this.assertKpiEditableByUser(kpi, user);
 
     const data = {};
@@ -244,17 +258,6 @@ export class KpiService {
       if (!sedes.length) {
         throw new AppError("Debes asignar al menos una sede", 400);
       }
-
-      const roles = normalizeRoles(user);
-      if (!isAdminLike(roles)) {
-        const allowedSedeIds = await this.getAllowedSedeIds(user);
-        const allowed = new Set(allowedSedeIds || []);
-        const invalid = sedes.filter((idSede) => !allowed.has(idSede));
-        if (invalid.length) {
-          throw new AppError("Hay sedes no permitidas para el usuario", 403);
-        }
-      }
-
       await this.model.replaceKpiSedes(idKpi, sedes);
     }
 
@@ -263,17 +266,7 @@ export class KpiService {
       if (!indicadores.length) {
         throw new AppError("Debes enviar al menos un indicador", 400);
       }
-      try {
-        await this.model.replaceIndicadores(idKpi, indicadores);
-      } catch (error) {
-        if (error?.code === "P2003") {
-          throw new AppError(
-            "No se pueden reemplazar indicadores porque ya tienen valores registrados",
-            409,
-          );
-        }
-        throw error;
-      }
+      await this.model.replaceIndicadoresWithCampos(idKpi, indicadores);
     }
 
     return this.model.findById(idKpi);
@@ -284,91 +277,136 @@ export class KpiService {
     if (!kpi) {
       throw new AppError("KPI no encontrado", 404);
     }
-
     this.assertKpiEditableByUser(kpi, user);
-
-    try {
-      return await this.model.delete(idKpi);
-    } catch (error) {
-      if (error?.code === "P2003") {
-        throw new AppError(
-          "No se puede eliminar el KPI porque tiene valores relacionados",
-          409,
-        );
-      }
-      throw error;
-    }
+    return this.model.delete(idKpi);
   }
 
-  async saveValores(payload, user) {
+  async saveValor(payload, user) {
     const fecha = parseDateOnly(payload.fecha);
-    if (!Array.isArray(payload.valores) || !payload.valores.length) {
-      throw new AppError("Debes enviar al menos un valor", 400);
+    const idIndicador = Number(payload.id_indicador);
+    if (!Number.isInteger(idIndicador)) {
+      throw new AppError("id_indicador inválido", 400);
     }
 
-    const roles = normalizeRoles(user);
-    const allowedSedeIds = await this.getAllowedSedeIds(user);
-    const saved = [];
+    const indicador = await this.model.findIndicadorById(idIndicador);
+    if (!indicador) {
+      throw new AppError("Indicador no encontrado", 404);
+    }
+    this.assertKpiEditableByUser(indicador.kpi, user);
 
-    for (const item of payload.valores) {
-      const idIndicador = Number(item.id_indicador);
-      if (!Number.isInteger(idIndicador)) {
-        throw new AppError("id_indicador inválido", 400);
+    const idSede =
+      payload.id_sede === null || payload.id_sede === undefined || payload.id_sede === ""
+        ? null
+        : Number(payload.id_sede);
+    if (idSede !== null && !Number.isInteger(idSede)) {
+      throw new AppError("id_sede inválido", 400);
+    }
+
+    if (idSede !== null) {
+      const enabled = indicador.kpi.kpi_sede.some((x) => x.id_sede === idSede);
+      if (!enabled) {
+        throw new AppError("La sede no está asociada al KPI", 400);
       }
+    }
 
-      const indicador = await this.model.findIndicadorById(idIndicador);
-      if (!indicador) {
-        throw new AppError(`Indicador no encontrado: ${idIndicador}`, 404);
-      }
+    const campos = this.normalizeValorCampos(
+      payload.campos || [],
+      indicador.kpi_indicador_campo || [],
+    );
 
-      this.assertKpiEditableByUser(indicador.kpi, user);
+    const legacyObjetivo = parseDecimal(payload.objetivo, "objetivo");
+    const legacyResultado = parseDecimal(payload.resultado, "resultado");
 
-      const idSede =
-        item.id_sede === null || item.id_sede === undefined
-          ? null
-          : Number(item.id_sede);
-      if (idSede !== null && !Number.isInteger(idSede)) {
-        throw new AppError("id_sede inválido", 400);
-      }
+    const existing = await this.model.findValorByUniqueTuple(
+      idIndicador,
+      fecha,
+      idSede,
+    );
 
-      if (idSede !== null) {
-        const enabled = indicador.kpi.kpi_sede.some((x) => x.id_sede === idSede);
-        if (!enabled) {
-          throw new AppError(
-            `La sede ${idSede} no está asociada al KPI ${indicador.kpi.id_kpi}`,
-            400,
-          );
-        }
-      }
+    if (existing) {
+      await this.model.updateValor(
+        existing.id_valor,
+        {
+          id_sede: idSede,
+          fecha,
+          objetivo: legacyObjetivo,
+          resultado: legacyResultado,
+          updated_by: user.id,
+          deleted_at: null,
+          deleted_by: null,
+        },
+        campos,
+      );
+      return this.model.findValorById(existing.id_valor);
+    }
 
-      if (!isAdminLike(roles) && idSede !== null) {
-        const allowed = new Set(allowedSedeIds || []);
-        if (!allowed.has(idSede)) {
-          throw new AppError("No autorizado para registrar valores en esta sede", 403);
-        }
-      }
-
-      const data = {
+    const created = await this.model.createValor(
+      {
         id_indicador: idIndicador,
         id_sede: idSede,
         fecha,
-        objetivo: parseDecimal(item.objetivo, "objetivo"),
-        resultado: parseDecimal(item.resultado, "resultado"),
-      };
+        objetivo: legacyObjetivo,
+        resultado: legacyResultado,
+        created_by: user.id,
+      },
+      campos,
+    );
+    return this.model.findValorById(created.id_valor);
+  }
 
-      const existing = await this.model.findValorByUniqueTuple(
-        idIndicador,
-        fecha,
-        idSede,
-      );
-
-      const row = existing
-        ? await this.model.updateValor(existing.id_valor, data)
-        : await this.model.createValor(data);
-
-      saved.push(row);
+  async updateValor(idValor, payload, user) {
+    const existing = await this.model.findValorById(idValor);
+    if (!existing || existing.deleted_at) {
+      throw new AppError("Valor no encontrado", 404);
     }
 
-    return saved;
+    this.assertKpiEditableByUser(existing.kpi_indicador.kpi, user);
+
+    const fecha = payload.fecha ? parseDateOnly(payload.fecha) : existing.fecha;
+    const idSede =
+      payload.id_sede === undefined
+        ? existing.id_sede
+        : payload.id_sede === null || payload.id_sede === ""
+          ? null
+          : Number(payload.id_sede);
+
+    if (idSede !== null && !Number.isInteger(idSede)) {
+      throw new AppError("id_sede inválido", 400);
+    }
+
+    const campos = this.normalizeValorCampos(
+      payload.campos || [],
+      existing.kpi_indicador.kpi_indicador_campo || [],
+    );
+
+    await this.model.updateValor(
+      idValor,
+      {
+        fecha,
+        id_sede: idSede,
+        objetivo:
+          payload.objetivo !== undefined
+            ? parseDecimal(payload.objetivo, "objetivo")
+            : existing.objetivo,
+        resultado:
+          payload.resultado !== undefined
+            ? parseDecimal(payload.resultado, "resultado")
+            : existing.resultado,
+        updated_by: user.id,
+      },
+      campos,
+    );
+
+    return this.model.findValorById(idValor);
+  }
+
+  async deleteValor(idValor, user) {
+    const existing = await this.model.findValorById(idValor);
+    if (!existing || existing.deleted_at) {
+      throw new AppError("Valor no encontrado", 404);
+    }
+    this.assertKpiEditableByUser(existing.kpi_indicador.kpi, user);
+    return this.model.softDeleteValor(idValor, user.id);
   }
 }
+
