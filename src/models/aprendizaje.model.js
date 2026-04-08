@@ -17,6 +17,9 @@ export class AprendizajeModel {
       orderBy: {
         fecha: "desc",
       },
+      include: {
+        evidencias: true,
+      },
     });
   }
 
@@ -30,6 +33,9 @@ export class AprendizajeModel {
     return prisma.aprendizaje.findUnique({
       where: {
         id_aprendizaje: id,
+      },
+      include: {
+        evidencias: true,
       },
     });
   }

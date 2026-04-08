@@ -32,7 +32,9 @@ export class PrioridadService {
 
     const where = {};
 
-    if (user.rol === "lider") {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (userRoles.includes("lider")) {
       where.id_responsable = user.id;
     }
 
@@ -72,7 +74,9 @@ export class PrioridadService {
       throw new AppError("Prioridad no encontrada", 404);
     }
 
-    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (userRoles.includes("lider") && existing.id_responsable !== user.id) {
       throw new AppError("No autorizado", 403);
     }
 
@@ -92,7 +96,9 @@ export class PrioridadService {
       throw new AppError("Prioridad no encontrada", 404);
     }
 
-    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (userRoles.includes("lider") && existing.id_responsable !== user.id) {
       throw new AppError("No autorizado", 403);
     }
 
@@ -106,7 +112,9 @@ export class PrioridadService {
       throw new AppError("Prioridad no encontrada", 404);
     }
 
-    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (userRoles.includes("lider") && existing.id_responsable !== user.id) {
       throw new AppError("No autorizado", 403);
     }
 

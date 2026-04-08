@@ -46,7 +46,16 @@ export class ResultadoClaveController {
       const id = parseInt(req.params.id);
       const user = req.user;
 
-      const result = await this.service.update(id, req.body, user);
+      const data = {
+        compromiso: req.body.compromiso,
+        fecha_inicio: req.body.fecha_inicio,
+        fecha_fin: req.body.fecha_fin,
+        comentarios: req.body.comentarios,
+        id_estado: req.body.id_estado,
+        nombre_responsable: req.body.nombre_responsable,
+      };
+
+      const result = await this.service.update(id, data, req.user);
 
       return successResponse(res, result);
     } catch (error) {

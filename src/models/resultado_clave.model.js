@@ -19,6 +19,9 @@ export class ResultadoClaveModel {
       orderBy: {
         fecha_creacion: "desc",
       },
+      include: {
+        evidencias: true,
+      },
     });
   }
 
@@ -32,6 +35,9 @@ export class ResultadoClaveModel {
     return prisma.resultado_clave.findUnique({
       where: {
         id_resultado: id,
+      },
+      include: {
+        evidencias: true,
       },
     });
   }

@@ -37,7 +37,9 @@ export class ResultadoClaveService {
       throw { status: 404, message: "Resultado clave no encontrado" };
     }
 
-    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (userRoles.includes("lider") && existing.id_responsable !== user.id) {
       throw new AppError("No autorizado", 403);
     }
 
@@ -51,7 +53,9 @@ export class ResultadoClaveService {
       throw new AppError("Resultado clave no encontrado", 404);
     }
 
-    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (userRoles.includes("lider") && existing.id_responsable !== user.id) {
       throw new AppError("No autorizado", 403);
     }
 
@@ -67,7 +71,9 @@ export class ResultadoClaveService {
       throw { status: 404, message: "Resultado clave no encontrado" };
     }
 
-    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (userRoles.includes("lider") && existing.id_responsable !== user.id) {
       throw new AppError("No autorizado", 403);
     }
 
@@ -81,7 +87,9 @@ export class ResultadoClaveService {
       throw new AppError("Resultado clave no encontrado", 404);
     }
 
-    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (userRoles.includes("lider") && existing.id_responsable !== user.id) {
       throw new AppError("No autorizado", 403);
     }
 
@@ -100,8 +108,9 @@ export class ResultadoClaveService {
     const skip = (page - 1) * limit;
 
     const where = {};
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
 
-    if (user.rol === "lider") {
+    if (userRoles.includes("lider")) {
       where.id_responsable = user.id;
     }
 

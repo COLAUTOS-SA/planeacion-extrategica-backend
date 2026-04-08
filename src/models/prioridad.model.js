@@ -15,6 +15,9 @@ export class PrioridadModel {
       orderBy: {
         fecha: "desc",
       },
+      include: {
+        evidencias: true,
+      },
     });
   }
 
@@ -27,6 +30,9 @@ export class PrioridadModel {
   async findById(id) {
     return prisma.prioridad.findUnique({
       where: { id_prioridad: id },
+      include: {
+        evidencias: true,
+      },
     });
   }
 

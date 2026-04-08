@@ -12,6 +12,8 @@ export class AprendizajeService {
     if (!(await estadoModel.exists(data.id_estado))) {
       throw new AppError("Estado no válido", 400);
     }
+
+    console.log(data)
     return this.model.create({
       ...data,
       fecha: data.fecha ? new Date(data.fecha) : null,
@@ -30,7 +32,9 @@ export class AprendizajeService {
     const skip = (page - 1) * limit;
     const where = {};
 
-    if (user.rol === "lider") {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (userRoles.includes("lider")) {
       where.id_responsable = user.id;
     }
 
@@ -74,7 +78,9 @@ export class AprendizajeService {
       throw { status: 404, message: "Aprendizaje no encontrado" };
     }
 
-    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (userRoles.includes("lider") && existing.id_responsable !== user.id) {
       throw new AppError("No autorizado", 403);
     }
 
@@ -88,7 +94,9 @@ export class AprendizajeService {
       throw new AppError("Aprendizaje no encontrado", 404);
     }
 
-    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (userRoles.includes("lider") && existing.id_responsable !== user.id) {
       throw new AppError("No autorizado", 403);
     }
 
@@ -104,7 +112,9 @@ export class AprendizajeService {
       throw { status: 404, message: "Aprendizaje no encontrado" };
     }
 
-    if (user.rol === "lider" && existing.id_responsable !== user.id) {
+    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+    if (userRoles.includes("lider") && existing.id_responsable !== user.id) {
       throw new AppError("No autorizado", 403);
     }
 

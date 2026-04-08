@@ -2,10 +2,11 @@ import { z } from "zod";
 import { successResponse } from "../utils/response.js";
 
 const createSchema = z.object({
-  descripcion: z.string().min(3),
+  descripcion: z.string().optional(),
   fecha: z.string().optional(),
   comentarios: z.string().optional(),
-  id_estado: z.number(),
+  id_estado: z.number().optional(),
+  nombre_responsable: z.string().optional(),
 });
 
 export class AprendizajeController {
@@ -38,7 +39,16 @@ export class AprendizajeController {
   update = async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
-      const result = await this.service.update(id, req.body, req.user);
+
+      const data = {
+        descripcion: req.body.descripcion,
+        fecha: req.body.fecha,
+        comentarios: req.body.comentarios,
+        id_estado: req.body.id_estado,
+        nombre_responsable: req.body.nombre_responsable,
+      };
+
+      const result = await this.service.update(id, data, req.user);
 
       return successResponse(res, result);
     } catch (error) {
