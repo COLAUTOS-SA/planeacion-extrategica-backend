@@ -190,6 +190,7 @@ model negocio {
   nombre          String            @db.VarChar(150)
   plan_alto_nivel plan_alto_nivel[]
   plan_anual      plan_anual[]
+  plan_mensual    plan_mensual[]
 }
 
 model objetivo_especifico {
@@ -263,6 +264,20 @@ model plan_anual {
 
   @@unique([anio, id_negocio], map: "anio")
   @@index([id_negocio], map: "id_negocio")
+}
+
+model plan_mensual {
+  id_plan_mensual Int       @id @default(autoincrement())
+  anio            Int       @db.Year
+  mes             Int       @db.TinyInt
+  id_negocio      Int
+  indicador       Decimal   @default(0.00) @db.Decimal(18, 2)
+  ejecutado       Decimal?  @db.Decimal(18, 2)
+  created_at      DateTime? @default(now()) @db.Timestamp(0)
+  negocio         negocio   @relation(fields: [id_negocio], references: [id_negocio], onUpdate: Restrict, map: "plan_mensual_ibfk_1")
+
+  @@unique([anio, mes, id_negocio], map: "uk_plan_mensual_anio_mes_negocio")
+  @@index([id_negocio], map: "idx_plan_mensual_negocio")
 }
 
 model prioridad {
@@ -442,3 +457,4 @@ enum kpi_campo_tipo {
   porcentaje
   texto
 }
+

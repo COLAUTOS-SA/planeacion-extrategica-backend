@@ -71,6 +71,15 @@ export class PlanAnualController {
     }
   };
 
+  getCompletoByAnio = async (req, res, next) => {
+    try {
+      const data = await service.getPlanCompletoByAnio(req.params.anio);
+      return successResponse(res, data);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   saveByAnio = async (req, res, next) => {
     try {
       const { items } = planBodySchema.parse(req.body);
@@ -81,4 +90,3 @@ export class PlanAnualController {
     }
   };
 }
-

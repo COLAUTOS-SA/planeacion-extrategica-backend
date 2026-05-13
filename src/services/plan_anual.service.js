@@ -129,6 +129,71 @@ export class PlanAnualService {
     };
   }
 
+  async getPlanCompletoByAnio(anio) {
+    const parsedAnio = this.normalizeAnio(anio);
+    const [negocios, planMensual] = await Promise.all([
+      this.model.findNegocios(),
+      this.model.findPlanMensualByAnio(parsedAnio),
+    ]);
+
+    const mensualByNegocio = new Map();
+    planMensual.forEach((row) => {
+      const rows = mensualByNegocio.get(row.id_negocio) ?? [];
+      rows.push({
+        id_plan_mensual: row.id_plan_mensual,
+        anio: row.anio,
+        mes: row.mes,
+        id_negocio: row.id_negocio,
+        indicador: toNumber(row.indicador) ?? 0,
+        ejecutado: toNumber(row.ejecutado),
+      });
+      mensualByNegocio.set(row.id_negocio, rows);
+    });
+
+    const data = negocios.map((negocio) => {
+      const mensual = mensualByNegocio.get(negocio.id_negocio) ?? [];
+      const indicador = mensual.reduce(
+        (acc, month) => acc + (month.indicador || 0),
+        0,
+      );
+      const hasEjecutado = mensual.some((month) => month.ejecutado !== null);
+      const ejecutado = mensual.reduce(
+        (acc, month) => acc + (month.ejecutado || 0),
+        0,
+      );
+
+      return {
+        id_negocio: negocio.id_negocio,
+        negocio: negocio.nombre,
+        indicador: Number(indicador.toFixed(2)),
+        ejecutado: hasEjecutado ? Number(ejecutado.toFixed(2)) : null,
+        porcentaje_incremento: hasEjecutado
+          ? calcIncrement(indicador, ejecutado)
+          : null,
+        mensual,
+      };
+    });
+
+    const totalIndicador = data.reduce((acc, row) => acc + (row.indicador || 0), 0);
+    const totalEjecutado = data.reduce(
+      (acc, row) => acc + (row.ejecutado === null ? 0 : row.ejecutado),
+      0,
+    );
+    const anyEjecutado = data.some((row) => row.ejecutado !== null);
+
+    return {
+      anio: parsedAnio,
+      items: data,
+      total: {
+        indicador: Number(totalIndicador.toFixed(2)),
+        ejecutado: anyEjecutado ? Number(totalEjecutado.toFixed(2)) : null,
+        porcentaje_incremento: anyEjecutado
+          ? calcIncrement(totalIndicador, totalEjecutado)
+          : null,
+      },
+    };
+  }
+
   async savePlanByAnio(anio, items) {
     const parsedAnio = this.normalizeAnio(anio);
 
@@ -159,4 +224,3 @@ export class PlanAnualService {
     return this.getPlanByAnio(parsedAnio);
   }
 }
-

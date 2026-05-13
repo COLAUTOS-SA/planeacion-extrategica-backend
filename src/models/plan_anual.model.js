@@ -27,8 +27,22 @@ export class PlanAnualModel {
   }
 
   async deleteNegocio(idNegocio) {
-    return prisma.negocio.delete({
-      where: { id_negocio: idNegocio },
+    return prisma.$transaction(async (tx) => {
+      await tx.plan_anual.deleteMany({
+        where: { id_negocio: idNegocio },
+      });
+
+      await tx.plan_alto_nivel.deleteMany({
+        where: { id_negocio: idNegocio },
+      });
+
+      await tx.plan_mensual.deleteMany({
+        where: { id_negocio: idNegocio },
+      });
+
+      return tx.negocio.delete({
+        where: { id_negocio: idNegocio },
+      });
     });
   }
 
@@ -41,6 +55,16 @@ export class PlanAnualModel {
       orderBy: {
         negocio: { id_negocio: "asc" },
       },
+    });
+  }
+
+  async findPlanMensualByAnio(anio) {
+    return prisma.plan_mensual.findMany({
+      where: { anio },
+      orderBy: [
+        { id_negocio: "asc" },
+        { mes: "asc" },
+      ],
     });
   }
 
@@ -69,4 +93,3 @@ export class PlanAnualModel {
     );
   }
 }
-

@@ -21,8 +21,8 @@ router.delete(
   controller.deleteNegocio,
 );
 
+router.get("/:anio/completo", controller.getCompletoByAnio);
 router.get("/:anio", controller.getByAnio);
 router.put("/:anio", authorizeRoles("admin", "super_admin"), controller.saveByAnio);
 
 export default router;
-
