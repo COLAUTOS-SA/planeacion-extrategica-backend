@@ -1,6 +1,42 @@
 import { prisma } from "../config/database.js";
 
 export class KpiModel {
+  async purgeIndicadoresByKpi(idKpi, tx = prisma) {
+    const indicadores = await tx.kpi_indicador.findMany({
+      where: { id_kpi: idKpi },
+      select: { id_indicador: true },
+    });
+
+    const indicadorIds = indicadores.map((item) => item.id_indicador);
+    if (!indicadorIds.length) return;
+
+    await tx.kpi_valor_campo.deleteMany({
+      where: {
+        kpi_valor: {
+          id_indicador: { in: indicadorIds },
+        },
+      },
+    });
+
+    await tx.kpi_valor.deleteMany({
+      where: {
+        id_indicador: { in: indicadorIds },
+      },
+    });
+
+    await tx.kpi_indicador_campo.deleteMany({
+      where: {
+        id_indicador: { in: indicadorIds },
+      },
+    });
+
+    await tx.kpi_indicador.deleteMany({
+      where: {
+        id_indicador: { in: indicadorIds },
+      },
+    });
+  }
+
   async findSedes() {
     return prisma.sede.findMany({
       orderBy: { nombre: "asc" },
@@ -115,6 +151,9 @@ export class KpiModel {
       include: {
         kpi_indicador: {
           include: {
+            kpi_indicador_campo: {
+              orderBy: { orden: "asc" },
+            },
             kpi: true,
           },
         },
@@ -146,8 +185,16 @@ export class KpiModel {
   }
 
   async delete(idKpi) {
-    return prisma.kpi.delete({
-      where: { id_kpi: idKpi },
+    return prisma.$transaction(async (tx) => {
+      await this.purgeIndicadoresByKpi(idKpi, tx);
+
+      await tx.kpi_sede.deleteMany({
+        where: { id_kpi: idKpi },
+      });
+
+      return tx.kpi.delete({
+        where: { id_kpi: idKpi },
+      });
     });
   }
 
@@ -165,33 +212,33 @@ export class KpiModel {
   }
 
   async replaceIndicadoresWithCampos(idKpi, indicadores) {
-    await prisma.kpi_indicador.deleteMany({
-      where: { id_kpi: idKpi },
-    });
+    await prisma.$transaction(async (tx) => {
+      await this.purgeIndicadoresByKpi(idKpi, tx);
 
-    for (const indicador of indicadores) {
-      const created = await prisma.kpi_indicador.create({
-        data: {
-          id_kpi: idKpi,
-          nombre: indicador.nombre,
-        },
-      });
-
-      if (indicador.campos?.length) {
-        await prisma.kpi_indicador_campo.createMany({
-          data: indicador.campos.map((campo, index) => ({
-            id_indicador: created.id_indicador,
-            nombre: campo.nombre,
-            tipo: campo.tipo || "numero",
-            orden: campo.orden || index + 1,
-            requerido: Boolean(campo.requerido),
-            editable: campo.editable !== false,
-            es_calculado: Boolean(campo.es_calculado),
-            formula: campo.formula || null,
-          })),
+      for (const indicador of indicadores) {
+        const created = await tx.kpi_indicador.create({
+          data: {
+            id_kpi: idKpi,
+            nombre: indicador.nombre,
+          },
         });
+
+        if (indicador.campos?.length) {
+          await tx.kpi_indicador_campo.createMany({
+            data: indicador.campos.map((campo, index) => ({
+              id_indicador: created.id_indicador,
+              nombre: campo.nombre,
+              tipo: campo.tipo || "numero",
+              orden: campo.orden || index + 1,
+              requerido: Boolean(campo.requerido),
+              editable: campo.editable !== false,
+              es_calculado: Boolean(campo.es_calculado),
+              formula: campo.formula || null,
+            })),
+          });
+        }
       }
-    }
+    });
   }
 
   async createValor(data, campos = []) {
@@ -257,4 +304,3 @@ export class KpiModel {
     });
   }
 }
-

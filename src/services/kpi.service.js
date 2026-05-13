@@ -32,6 +32,11 @@ const parseDecimal = (value, fieldName) => {
   return new Prisma.Decimal(num);
 };
 
+const sortByName = (a, b) =>
+  String(a?.nombre || "").localeCompare(String(b?.nombre || ""), "es", {
+    sensitivity: "base",
+  });
+
 export class KpiService {
   constructor(model) {
     this.model = model;
@@ -112,6 +117,46 @@ export class KpiService {
               { nombre: "Resultado", tipo: "numero", requerido: false },
             ],
     }));
+  }
+
+  normalizeIndicadoresFromDb(indicadores = []) {
+    return (indicadores || [])
+      .map((item) => ({
+        nombre: String(item?.nombre || "").trim(),
+        campos: (item?.kpi_indicador_campo || [])
+          .map((campo, index) => ({
+            nombre: String(campo?.nombre || "").trim(),
+            tipo: campo?.tipo || "numero",
+            orden: campo?.orden || index + 1,
+            requerido: Boolean(campo?.requerido),
+            editable: campo?.editable !== false,
+            es_calculado: Boolean(campo?.es_calculado),
+            formula: campo?.formula || null,
+          }))
+          .filter((campo) => campo.nombre),
+      }))
+      .filter((item) => item.nombre);
+  }
+
+  indicadoresFingerprint(indicadores = []) {
+    const normalized = (indicadores || [])
+      .map((indicador) => ({
+        nombre: String(indicador.nombre || "").trim().toLowerCase(),
+        campos: (indicador.campos || [])
+          .map((campo) => ({
+            nombre: String(campo.nombre || "").trim().toLowerCase(),
+            tipo: campo.tipo || "numero",
+            orden: Number(campo.orden) || 0,
+            requerido: Boolean(campo.requerido),
+            editable: campo.editable !== false,
+            es_calculado: Boolean(campo.es_calculado),
+            formula: campo.formula || null,
+          }))
+          .sort((a, b) => a.orden - b.orden || sortByName(a, b)),
+      }))
+      .sort(sortByName);
+
+    return JSON.stringify(normalized);
   }
 
   normalizeValorCampos(campos = [], availableCampos = []) {
@@ -266,7 +311,17 @@ export class KpiService {
       if (!indicadores.length) {
         throw new AppError("Debes enviar al menos un indicador", 400);
       }
-      await this.model.replaceIndicadoresWithCampos(idKpi, indicadores);
+
+      const currentIndicadores = this.normalizeIndicadoresFromDb(
+        kpi.kpi_indicador || [],
+      );
+
+      const incomingFp = this.indicadoresFingerprint(indicadores);
+      const currentFp = this.indicadoresFingerprint(currentIndicadores);
+
+      if (incomingFp !== currentFp) {
+        await this.model.replaceIndicadoresWithCampos(idKpi, indicadores);
+      }
     }
 
     return this.model.findById(idKpi);
@@ -409,4 +464,3 @@ export class KpiService {
     return this.model.softDeleteValor(idValor, user.id);
   }
 }
-
