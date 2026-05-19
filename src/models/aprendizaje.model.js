@@ -49,6 +49,17 @@ export class AprendizajeModel {
     });
   }
 
+  async updateFavorito(id, favorito) {
+    return prisma.aprendizaje.update({
+      where: {
+        id_aprendizaje: id,
+      },
+      data: {
+        favorito,
+      },
+    });
+  }
+
   async delete(id) {
     return prisma.aprendizaje.delete({
       where: {

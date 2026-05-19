@@ -43,6 +43,17 @@ export class PrioridadModel {
     });
   }
 
+  async updateFavorito(id, favorito) {
+    return prisma.prioridad.update({
+      where: {
+        id_prioridad: id,
+      },
+      data: {
+        favorito,
+      },
+    });
+  }
+
   async delete(id) {
     return prisma.prioridad.delete({
       where: { id_prioridad: id },

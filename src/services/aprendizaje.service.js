@@ -13,7 +13,7 @@ export class AprendizajeService {
       throw new AppError("Estado no válido", 400);
     }
 
-    console.log(data)
+    console.log(data);
     return this.model.create({
       ...data,
       fecha: data.fecha ? new Date(data.fecha) : null,
@@ -100,9 +100,7 @@ export class AprendizajeService {
       throw new AppError("No autorizado", 403);
     }
 
-    return this.model.update(id, {
-      favorito: !existing.favorito,
-    });
+    return this.model.updateFavorito(id, !existing.favorito);
   }
 
   async delete(id, user) {

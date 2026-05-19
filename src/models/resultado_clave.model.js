@@ -59,6 +59,17 @@ export class ResultadoClaveModel {
     });
   }
 
+  async updateFavorito(id, favorito) {
+    return prisma.resultado_clave.update({
+      where: {
+        id_resultado: id,
+      },
+      data: {
+        favorito,
+      },
+    });
+  }
+
   async countByUser(userId, where) {
     return prisma.resultado_clave.count({
       where: {

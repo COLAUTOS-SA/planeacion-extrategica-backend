@@ -16,8 +16,8 @@ export class ResultadoClaveService {
     }
 
     if (data.avance < 0 || data.avance > 100) {
-  throw new AppError("El avance debe estar entre 0 y 100", 400);
-}
+      throw new AppError("El avance debe estar entre 0 y 100", 400);
+    }
 
     return this.model.create({
       ...data,
@@ -63,9 +63,10 @@ export class ResultadoClaveService {
       throw new AppError("No autorizado", 403);
     }
 
-    return this.model.update(id, {
-      favorito: !existing.favorito,
-    });
+return this.model.updateFavorito(
+  id,
+  !existing.favorito,
+);
   }
 
   async delete(id, user) {
