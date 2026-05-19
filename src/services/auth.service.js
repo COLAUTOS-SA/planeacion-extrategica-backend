@@ -119,7 +119,7 @@ export class AuthService {
         sedes,
       },
       env.JWT_SECRET,
-      { expiresIn: "1d" },
+      { expiresIn: "4h" },
     );
   }
 }
