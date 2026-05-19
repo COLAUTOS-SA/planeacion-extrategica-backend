@@ -15,6 +15,10 @@ export class ResultadoClaveService {
       throw new AppError("Estado no válido", 400);
     }
 
+    if (data.avance < 0 || data.avance > 100) {
+  throw new AppError("El avance debe estar entre 0 y 100", 400);
+}
+
     return this.model.create({
       ...data,
       fecha_inicio: data.fecha_inicio ? new Date(data.fecha_inicio) : null,

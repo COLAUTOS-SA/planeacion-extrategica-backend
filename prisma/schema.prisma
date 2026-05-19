@@ -335,6 +335,7 @@ model resultado_clave {
   fecha_fin          DateTime?   @db.Date
   comentarios        String?     @db.Text
   favorito           Boolean?    @default(false)
+  avance             Int         @default(0)
   id_responsable     Int
   id_estado          Int
   nombre_responsable String?     @db.VarChar(150)

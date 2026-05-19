@@ -10,6 +10,7 @@ const createSchema = z.object({
   fecha_fin: z.string().optional(),
   comentarios: z.string().optional(),
   favorito: z.boolean().optional(),
+  avance: z.number().min(0).max(100).optional().default(0),
   id_estado: z.number(),
 });
 
@@ -53,6 +54,7 @@ export class ResultadoClaveController {
         comentarios: req.body.comentarios,
         id_estado: req.body.id_estado,
         nombre_responsable: req.body.nombre_responsable,
+        avance: req.body.avance,
       };
 
       const result = await this.service.update(id, data, req.user);
