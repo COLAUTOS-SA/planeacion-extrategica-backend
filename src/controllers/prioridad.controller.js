@@ -4,7 +4,8 @@ import { successResponse } from "../utils/response.js";
 const createSchema = z.object({
   descripcion: z.string().min(3),
   nombre_responsable: z.string().optional(),
-  fecha: z.string().optional(),
+  fecha_inicio: z.string().optional(),
+  fecha_fin: z.string().optional(),
   comentarios: z.string().optional(),
   id_estado: z.number(),
 });
@@ -40,7 +41,11 @@ export class PrioridadController {
       const id = parseInt(req.params.id);
       const data = {
         descripcion: req.body.descripcion,
-        fecha: req.body.fecha,
+        fecha_inicio: req.body.fecha_inicio
+          ? new Date(req.body.fecha_inicio)
+          : null,
+
+        fecha_fin: req.body.fecha_fin ? new Date(req.body.fecha_fin) : null,
         comentarios: req.body.comentarios,
         id_estado: req.body.id_estado,
         nombre_responsable: req.body.nombre_responsable,

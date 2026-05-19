@@ -13,7 +13,7 @@ export class PrioridadModel {
       skip,
       take,
       orderBy: {
-        fecha: "desc",
+        fecha_creacion: "desc",
       },
       include: {
         evidencias: true,

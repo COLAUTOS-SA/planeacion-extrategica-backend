@@ -13,12 +13,20 @@ export class PrioridadService {
       throw new AppError("Estado no válido", 400);
     }
 
+    if (data.fecha_inicio) {
+      data.fecha_inicio = new Date(data.fecha_inicio);
+    }
+
+    if (data.fecha_fin) {
+      data.fecha_fin = new Date(data.fecha_fin);
+    }
+
     return this.model.create({
       ...data,
-      fecha: data.fecha ? new Date(data.fecha) : null,
       id_responsable: user.id,
     });
   }
+
 
   async getAll(user, query) {
     const page = parseInt(query.page) || 1;
@@ -85,25 +93,33 @@ export class PrioridadService {
     });
   }
 
-  async update(id, data, user) {
-    if (!(await estadoModel.exists(data.id_estado))) {
-      throw new AppError("Estado no válido", 400);
-    }
-
-    const existing = await this.model.findById(id);
-
-    if (!existing) {
-      throw new AppError("Prioridad no encontrada", 404);
-    }
-
-    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
-
-    if (userRoles.includes("lider") && existing.id_responsable !== user.id) {
-      throw new AppError("No autorizado", 403);
-    }
-
-    return this.model.update(id, data);
+async update(id, data, user) {
+  if (!(await estadoModel.exists(data.id_estado))) {
+    throw new AppError("Estado no válido", 400);
   }
+
+  if (data.fecha_inicio) {
+    data.fecha_inicio = new Date(data.fecha_inicio);
+  }
+
+  if (data.fecha_fin) {
+    data.fecha_fin = new Date(data.fecha_fin);
+  }
+
+  const existing = await this.model.findById(id);
+
+  if (!existing) {
+    throw new AppError("Prioridad no encontrada", 404);
+  }
+
+  const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+
+  if (userRoles.includes("lider") && existing.id_responsable !== user.id) {
+    throw new AppError("No autorizado", 403);
+  }
+
+  return this.model.update(id, data);
+}
 
   async delete(id, user) {
     const existing = await this.model.findById(id);

@@ -283,7 +283,9 @@ model plan_mensual {
 model prioridad {
   id_prioridad       Int         @id @default(autoincrement())
   descripcion        String      @db.Text
-  fecha              DateTime?   @db.Date
+  fecha_creacion     DateTime?   @default(now()) @db.Timestamp(0)
+  fecha_inicio       DateTime?   @db.Date
+  fecha_fin          DateTime?   @db.Date
   comentarios        String?     @db.Text
   id_responsable     Int
   id_estado          Int
