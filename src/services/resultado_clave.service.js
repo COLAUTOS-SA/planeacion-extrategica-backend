@@ -47,6 +47,22 @@ export class ResultadoClaveService {
       throw new AppError("No autorizado", 403);
     }
 
+    if (data.fecha_inicio) {
+      data.fecha_inicio = new Date(data.fecha_inicio);
+    }
+
+    if (data.fecha_fin) {
+      data.fecha_fin = new Date(data.fecha_fin);
+    }
+
+    if (
+      data.avance === undefined ||
+      data.avance === null ||
+      data.avance === ""
+    ) {
+      delete data.avance;
+    }
+
     return this.model.update(id, data);
   }
 
@@ -63,10 +79,7 @@ export class ResultadoClaveService {
       throw new AppError("No autorizado", 403);
     }
 
-return this.model.updateFavorito(
-  id,
-  !existing.favorito,
-);
+    return this.model.updateFavorito(id, !existing.favorito);
   }
 
   async delete(id, user) {
