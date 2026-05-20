@@ -30,47 +30,50 @@ export class ReporteService {
     });
   }
 
-  async getFavoritosByLider(user, liderId) {
-    const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
+async getFavoritosByLider(user, liderId) {
+  const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
 
-    if (!userRoles.includes("admin")) {
-      throw new AppError("No autorizado", 403);
-    }
-
-    const resultados = await prisma.resultado_clave.findMany({
-      where: {
-        id_responsable: liderId,
-        favorito: true,
-      },
-      include: {
-        estado: true,
-      },
-    });
-
-    const prioridades = await prisma.prioridad.findMany({
-      where: {
-        id_responsable: liderId,
-        favorito: true,
-      },
-      include: {
-        estado: true,
-      },
-    });
-
-    const aprendizajes = await prisma.aprendizaje.findMany({
-      where: {
-        id_responsable: liderId,
-        favorito: true,
-      },
-      include: {
-        estado: true,
-      },
-    });
-
-    return {
-      resultados,
-      prioridades,
-      aprendizajes,
-    };
+  if (!userRoles.includes("admin")) {
+    throw new AppError("No autorizado", 403);
   }
+
+  const resultados = await prisma.resultado_clave.findMany({
+    where: {
+      id_responsable: liderId,
+      favorito: true,
+    },
+    include: {
+      estado: true,
+      evidencias: true,
+    },
+  });
+
+  const prioridades = await prisma.prioridad.findMany({
+    where: {
+      id_responsable: liderId,
+      favorito: true,
+    },
+    include: {
+      estado: true,
+      evidencias: true,
+    },
+  });
+
+  const aprendizajes = await prisma.aprendizaje.findMany({
+    where: {
+      id_responsable: liderId,
+      favorito: true,
+    },
+    include: {
+      estado: true,
+      evidencias: true,
+    },
+  });
+
+  return {
+    resultados,
+    prioridades,
+    aprendizajes,
+  };
+}
 }
