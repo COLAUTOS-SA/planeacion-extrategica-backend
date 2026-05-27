@@ -22,7 +22,7 @@ export class PrioridadModel {
   }
 
   async count(where) {
-    return prisma.resultado_clave.count({
+    return prisma.prioridad.count({
       where,
     });
   }

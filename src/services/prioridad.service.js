@@ -1,7 +1,9 @@
 import { EstadoModel } from "../models/estado.model.js";
 import { AppError } from "../utils/AppError.js";
+import { ResultadoClaveModel } from "../models/resultado_clave.model.js";
 
 const estadoModel = new EstadoModel();
+const resultadoClaveModel = new ResultadoClaveModel();
 
 export class PrioridadService {
   constructor(model) {
@@ -11,6 +13,10 @@ export class PrioridadService {
   async create(data, user) {
     if (!(await estadoModel.exists(data.id_estado))) {
       throw new AppError("Estado no válido", 400);
+    }
+
+    if (data.avance < 0 || data.avance > 100) {
+      throw new AppError("El avance debe estar entre 0 y 100", 400);
     }
 
     if (data.fecha_inicio) {
@@ -41,9 +47,7 @@ export class PrioridadService {
 
     const userRoles = user.roles ?? (user.rol ? [user.rol] : []);
 
-    if (userRoles.includes("lider")) {
-      where.id_responsable = user.id;
-    }
+    where.id_responsable = user.id;
 
     if (query.estado) {
       const estadoId = parseInt(query.estado);
@@ -95,6 +99,10 @@ export class PrioridadService {
       throw new AppError("Estado no válido", 400);
     }
 
+    if (data.avance !== undefined && (data.avance < 0 || data.avance > 100)) {
+      throw new AppError("El avance debe estar entre 0 y 100", 400);
+    }
+
     if (data.fecha_inicio) {
       data.fecha_inicio = new Date(data.fecha_inicio);
     }
@@ -115,7 +123,30 @@ export class PrioridadService {
       throw new AppError("No autorizado", 403);
     }
 
-    return this.model.update(id, data);
+    const updated = await this.model.update(id, data);
+
+    // AUTO CONVERSIÓN A RESULTADO CLAVE
+    if (updated.avance >= 100 && !updated.convertido_resultado) {
+      await resultadoClaveModel.create({
+        compromiso: updated.descripcion,
+        fecha_creacion: new Date(),
+        fecha_inicio: updated.fecha_inicio,
+        fecha_fin: updated.fecha_fin,
+        comentarios: updated.comentarios,
+        favorito: updated.favorito ?? false,
+        avance: 100,
+        id_responsable: updated.id_responsable,
+        id_estado: 3,
+        nombre_responsable: updated.nombre_responsable,
+      });
+
+      await this.model.update(id, {
+        convertido_resultado: true,
+        id_estado: 3,
+      });
+    }
+
+    return updated;
   }
 
   async delete(id, user) {

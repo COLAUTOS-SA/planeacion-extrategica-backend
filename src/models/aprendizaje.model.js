@@ -24,7 +24,7 @@ export class AprendizajeModel {
   }
 
   async count(where) {
-    return prisma.resultado_clave.count({
+    return prisma.aprendizaje.count({
       where,
     });
   }
@@ -70,10 +70,7 @@ export class AprendizajeModel {
 
   async countByUser(userId, where) {
     return prisma.aprendizaje.count({
-      where: {
-        id_responsable: userId,
-        ...where,
-      },
+      where,
     });
   }
 }

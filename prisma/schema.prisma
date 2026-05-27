@@ -290,6 +290,8 @@ model prioridad {
   id_responsable     Int
   id_estado          Int
   favorito           Boolean?    @default(false)
+  avance             Int         @default(0)
+  convertido_resultado Boolean  @default(false)
   nombre_responsable String?     @db.VarChar(150)
   evidencias         evidencia[]
   usuario            usuario     @relation(fields: [id_responsable], references: [id_usuario], onUpdate: Restrict, map: "prioridad_ibfk_1")
