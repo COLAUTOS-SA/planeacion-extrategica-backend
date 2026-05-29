@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { AppError } from "../utils/AppError.js";
+import { prisma } from "../config/database.js";
 
 const MESES_VALIDOS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
 
@@ -104,7 +105,8 @@ export class PlanMensualService {
 
     await this.assertNegocioExists(parsedNegocio);
 
-    const indicador = toDecimalOrNull(payload.indicador, "indicador") ?? new Prisma.Decimal(0);
+    const indicador =
+      toDecimalOrNull(payload.indicador, "indicador") ?? new Prisma.Decimal(0);
     const ejecutado = toDecimalOrNull(payload.ejecutado, "ejecutado");
 
     try {
@@ -115,6 +117,24 @@ export class PlanMensualService {
         indicador,
         ejecutado,
       });
+
+      // Crear automáticamente registros para todas las sedes
+      const sedes = await prisma.sede.findMany({
+        select: {
+          id_sede: true,
+        },
+      });
+
+      if (sedes.length > 0) {
+        await prisma.plan_mensual_sede.createMany({
+          data: sedes.map((sede) => ({
+            id_plan_mensual: created.id_plan_mensual,
+            id_sede: sede.id_sede,
+            indicador: 0,
+            ejecutado: 0,
+          })),
+        });
+      }
 
       return this.mapRow(created);
     } catch (error) {
@@ -143,7 +163,9 @@ export class PlanMensualService {
     }
 
     if (payload.indicador !== undefined) {
-      data.indicador = toDecimalOrNull(payload.indicador, "indicador") ?? new Prisma.Decimal(0);
+      data.indicador =
+        toDecimalOrNull(payload.indicador, "indicador") ??
+        new Prisma.Decimal(0);
     }
 
     if (payload.ejecutado !== undefined) {

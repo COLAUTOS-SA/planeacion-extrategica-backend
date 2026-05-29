@@ -16,15 +16,36 @@ export class PlanMensualModel {
       orderBy: {
         mes: "asc",
       },
+      include: {
+        plan_mensual_sede: {
+          include: {
+            sede: true,
+          },
+          orderBy: {
+            sede: {
+              nombre: "asc",
+            },
+          },
+        },
+      },
     });
   }
 
   async findById(idPlanMensual) {
     return prisma.plan_mensual.findUnique({
-      where: { id_plan_mensual: idPlanMensual },
+      where: {
+        id_plan_mensual: idPlanMensual,
+      },
+      include: {
+        plan_mensual_sede: {
+          include: {
+            sede: true,
+          },
+        },
+      },
     });
   }
-
+  
   async create(data) {
     return prisma.plan_mensual.create({
       data,

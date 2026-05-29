@@ -107,6 +107,7 @@ model sede {
   kpi_sede      kpi_sede[]
   kpi_valor     kpi_valor[]
   usuarios_sede usuario_sede[]
+  plan_mensual_sede plan_mensual_sede[]
 }
 
 model kpi_sede {
@@ -276,6 +277,7 @@ model plan_mensual {
   created_at      DateTime? @default(now()) @db.Timestamp(0)
   negocio         negocio   @relation(fields: [id_negocio], references: [id_negocio], onUpdate: Restrict, map: "plan_mensual_ibfk_1")
 
+  plan_mensual_sede plan_mensual_sede[]
   @@unique([anio, mes, id_negocio], map: "uk_plan_mensual_anio_mes_negocio")
   @@index([id_negocio], map: "idx_plan_mensual_negocio")
 }
@@ -446,6 +448,33 @@ model evidencia {
   @@index([id_resultado], map: "id_resultado")
 }
 
+model plan_mensual_sede {
+  id_plan_mensual_sede Int @id @default(autoincrement())
+
+  id_plan_mensual Int
+  id_sede         Int
+
+  indicador Decimal @default(0.00) @db.Decimal(18,2)
+  ejecutado Decimal? @db.Decimal(18,2)
+
+  plan_mensual plan_mensual
+    @relation(
+      fields: [id_plan_mensual],
+      references: [id_plan_mensual],
+      onDelete: Cascade
+    )
+
+  sede sede
+    @relation(
+      fields: [id_sede],
+      references: [id_sede]
+    )
+
+  @@unique([id_plan_mensual, id_sede])
+  @@index([id_plan_mensual])
+  @@index([id_sede])
+}
+
 enum evidencia_tipo {
   imagen
   video
@@ -461,5 +490,6 @@ enum kpi_campo_tipo {
   numero
   porcentaje
   texto
+  moneda_cop
 }
 
