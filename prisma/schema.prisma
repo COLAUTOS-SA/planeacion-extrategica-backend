@@ -452,23 +452,14 @@ model plan_mensual_sede {
   id_plan_mensual_sede Int @id @default(autoincrement())
 
   id_plan_mensual Int
-  id_sede         Int
+  id_sede Int
 
-  indicador Decimal @default(0.00) @db.Decimal(18,2)
-  ejecutado Decimal? @db.Decimal(18,2)
+  indicador Decimal @default(0.00) @db.Decimal(18, 2)
+  ejecutado Decimal? @db.Decimal(18, 2)
 
-  plan_mensual plan_mensual
-    @relation(
-      fields: [id_plan_mensual],
-      references: [id_plan_mensual],
-      onDelete: Cascade
-    )
+  plan_mensual plan_mensual @relation(fields: [id_plan_mensual], references: [id_plan_mensual], onDelete: Cascade)
 
-  sede sede
-    @relation(
-      fields: [id_sede],
-      references: [id_sede]
-    )
+  sede sede @relation(fields: [id_sede], references: [id_sede])
 
   @@unique([id_plan_mensual, id_sede])
   @@index([id_plan_mensual])
