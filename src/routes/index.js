@@ -9,6 +9,8 @@ import repositorioLideresRoutes from "./repositorio_lideres.routes.js";
 import planAnualRoutes from "./plan_anual.routes.js";
 import planMensualRoutes from "./plan_mensual.routes.js";
 import kpiRoutes from "./kpi.routes.js";
+import sedeRoutes from "./sede.routes.js";
+import planMensualSedeRoutes from "./plan_mensual_sede.routes.js";
 
 const router = Router();
 
@@ -37,5 +39,7 @@ router.use("/repositorio-lideres", repositorioLideresRoutes);
 router.use("/plan-anual", planAnualRoutes);
 router.use("/plan-mensual", planMensualRoutes);
 router.use("/kpis", kpiRoutes);
+router.use("/sedes", sedeRoutes);
+router.use("/plan-mensual-sede", planMensualSedeRoutes);
 
 export default router;
