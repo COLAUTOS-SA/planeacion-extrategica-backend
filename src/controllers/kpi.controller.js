@@ -8,7 +8,7 @@ const service = new KpiService(new KpiModel());
 const campoSchema = z.object({
   id_campo: z.number().int().optional(),
   nombre: z.string().optional(),
-  tipo: z.enum(["numero", "porcentaje", "texto"]).optional(),
+  tipo: z.enum(["numero", "porcentaje", "texto", "moneda_cop"]).optional(),
   orden: z.number().int().optional(),
   requerido: z.boolean().optional(),
   editable: z.boolean().optional(),
@@ -174,4 +174,3 @@ export class KpiController {
     }
   };
 }
-

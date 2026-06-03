@@ -1,5 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { AppError } from "../utils/AppError.js";
+import {
+  computeAutoFieldValue,
+  detectAutoFields,
+  getFieldKey,
+} from "../utils/kpiAutoFields.js";
 
 const isAdminLike = (roles) =>
   roles.includes("admin") || roles.includes("super_admin") || roles.includes("2");
@@ -109,13 +114,14 @@ export class KpiService {
 
     return parsed.map((item) => ({
       ...item,
-      campos:
+      campos: detectAutoFields(
         item.campos.length > 0
           ? item.campos
           : [
               { nombre: "Objetivo", tipo: "numero", requerido: false },
               { nombre: "Resultado", tipo: "numero", requerido: false },
             ],
+      ),
     }));
   }
 
@@ -164,24 +170,43 @@ export class KpiService {
       throw new AppError("El campo campos debe ser un arreglo", 400);
     }
 
-    const allowed = new Map(
-      availableCampos.map((campo) => [campo.id_campo, campo]),
+    const incoming = new Map(
+      campos.map((campo) => [Number(campo.id_campo), campo]),
     );
+    const valuesByName = {};
 
-    return campos.map((campo) => {
-      const idCampo = Number(campo.id_campo);
-      const source = allowed.get(idCampo);
-      if (!source) {
-        throw new AppError(`Campo inválido: ${campo.id_campo}`, 400);
-      }
+    availableCampos.forEach((source) => {
+      const campo = incoming.get(Number(source.id_campo));
+      if (!campo) return;
+      const value =
+        source.tipo === "texto" ? campo.valor_texto : campo.valor_decimal;
+      valuesByName[getFieldKey(source.nombre)] = value;
+      valuesByName[String(source.nombre || "").toLowerCase()] = value;
+    });
+
+    return availableCampos.map((source) => {
+      const idCampo = Number(source.id_campo);
+      const campo = incoming.get(idCampo) || { id_campo: idCampo };
+      const isAuto = source.es_calculado || source.editable === false;
+      const autoValue = isAuto
+        ? computeAutoFieldValue(source, valuesByName)
+        : null;
 
       return {
         id_campo: idCampo,
-        valor_decimal: parseDecimal(campo.valor_decimal, source.nombre),
-        valor_texto:
-          campo.valor_texto === undefined || campo.valor_texto === null
+        valor_decimal:
+          source.tipo === "texto"
             ? null
-            : String(campo.valor_texto),
+            : parseDecimal(
+                autoValue !== null ? autoValue : campo.valor_decimal,
+                source.nombre,
+              ),
+        valor_texto:
+          source.tipo !== "texto"
+            ? null
+            : campo.valor_texto === undefined || campo.valor_texto === null
+              ? null
+              : String(campo.valor_texto),
       };
     });
   }
