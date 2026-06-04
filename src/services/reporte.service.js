@@ -11,6 +11,7 @@ export class ReporteService {
 
     return prisma.usuario.findMany({
       where: {
+        activo: true,
         usuarios_roles: {
           some: {
             rol: {
