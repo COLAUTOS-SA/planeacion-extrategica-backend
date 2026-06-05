@@ -11,6 +11,9 @@ import planMensualRoutes from "./plan_mensual.routes.js";
 import kpiRoutes from "./kpi.routes.js";
 import sedeRoutes from "./sede.routes.js";
 import planMensualSedeRoutes from "./plan_mensual_sede.routes.js";
+import perspectivaRoutes from "./perspectiva.routes.js";
+import objetivoGeneralRoutes from "./objetivo_general.routes.js";
+import tareaRoutes from "./tarea.routes.js";
 
 const router = Router();
 
@@ -41,5 +44,17 @@ router.use("/plan-mensual", planMensualRoutes);
 router.use("/kpis", kpiRoutes);
 router.use("/sedes", sedeRoutes);
 router.use("/plan-mensual-sede", planMensualSedeRoutes);
+router.use(
+  "/perspectivas",
+  perspectivaRoutes,
+);
+router.use(
+  "/objetivos-generales",
+  objetivoGeneralRoutes,
+);
+router.use(
+  "/tareas",
+  tareaRoutes,
+);
 
 export default router;
