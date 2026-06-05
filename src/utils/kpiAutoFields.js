@@ -5,7 +5,8 @@ export const normalizeFieldName = (value) =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/%/g, " porcentaje ")
-    .replace(/\s+/g, " ");
+    .replace(/\s+/g, " ")
+    .trim();
 
 export const getFieldKey = (value) => {
   const normalized = normalizeFieldName(value);
