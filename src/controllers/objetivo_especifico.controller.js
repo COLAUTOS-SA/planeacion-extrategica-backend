@@ -6,9 +6,14 @@ const service =
   new ObjetivoEspecificoService();
 
 const schema = z.object({
-  titulo: z.string().trim().min(3),
+
+  titulo: z.string(),
 
   descripcion: z.string().optional(),
+
+  id_objetivo_general: z.number(),
+
+  responsables: z.array(z.number()).default([]),
 
   fecha_inicio: z.string().optional(),
 
@@ -16,17 +21,6 @@ const schema = z.object({
 
   activo: z.boolean().optional(),
 
-  id_objetivo_general: z.number(),
-
-  id_responsable: z.number(),
-
-  responsables: z
-    .array(z.number())
-    .optional(),
-
-  interdependencias: z
-    .array(z.number())
-    .optional(),
 });
 
 export class ObjetivoEspecificoController {

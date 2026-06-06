@@ -6,8 +6,6 @@ export class ObjetivoEspecificoModel {
       include: {
         objetivo_general: true,
 
-        usuario: true,
-
         objetivo_especifico_responsable: {
           include: {
             usuario: true,
@@ -37,8 +35,6 @@ export class ObjetivoEspecificoModel {
 
       include: {
         objetivo_general: true,
-
-        usuario: true,
 
         objetivo_especifico_responsable: {
           include: {
@@ -88,10 +84,7 @@ export class ObjetivoEspecificoModel {
     });
   }
 
-  async replaceResponsables(
-    idObjetivo,
-    responsables,
-  ) {
+  async replaceResponsables(idObjetivo, responsables) {
     return prisma.$transaction(async (tx) => {
       await tx.objetivo_especifico_responsable.deleteMany({
         where: {
@@ -112,10 +105,7 @@ export class ObjetivoEspecificoModel {
     });
   }
 
-  async replaceInterdependencias(
-    idObjetivo,
-    usuarios,
-  ) {
+  async replaceInterdependencias(idObjetivo, usuarios) {
     return prisma.$transaction(async (tx) => {
       await tx.objetivo_interdependencia.deleteMany({
         where: {

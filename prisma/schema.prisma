@@ -203,7 +203,6 @@ model objetivo_especifico {
   titulo                          String                            @db.VarChar(200)
   descripcion                     String?                           @db.Text
   id_objetivo_general             Int
-  id_responsable                  Int
   created_at                      DateTime?                         @default(now()) @db.Timestamp(0)
   fecha_inicio                    DateTime?                         @db.Date
   fecha_fin                       DateTime?                         @db.Date
@@ -211,13 +210,11 @@ model objetivo_especifico {
   activo                          Boolean                           @default(true)
   updated_at                      DateTime?                         @db.Timestamp(0)
   objetivo_general                objetivo_general                  @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onUpdate: Restrict, map: "objetivo_especifico_ibfk_1")
-  usuario                         usuario                           @relation(fields: [id_responsable], references: [id_usuario], onUpdate: Restrict, map: "objetivo_especifico_ibfk_2")
   objetivo_especifico_responsable objetivo_especifico_responsable[]
   objetivo_interdependencia       objetivo_interdependencia[]
   tarea                           tarea[]
 
   @@index([id_objetivo_general], map: "id_objetivo_general")
-  @@index([id_responsable], map: "id_responsable")
 }
 
 model objetivo_general {
@@ -225,7 +222,6 @@ model objetivo_general {
   titulo                       String                         @db.VarChar(200)
   descripcion                  String?                        @db.Text
   id_perspectiva               Int
-  id_responsable               Int
   created_at                   DateTime?                      @default(now()) @db.Timestamp(0)
   fecha_inicio                 DateTime?                      @db.Date
   fecha_fin                    DateTime?                      @db.Date
@@ -236,12 +232,10 @@ model objetivo_general {
   kpi                          kpi[]
   objetivo_especifico          objetivo_especifico[]
   perspectiva                  perspectiva                    @relation(fields: [id_perspectiva], references: [id_perspectiva], onUpdate: Restrict, map: "objetivo_general_ibfk_1")
-  usuario                      usuario                        @relation(fields: [id_responsable], references: [id_usuario], onUpdate: Restrict, map: "objetivo_general_ibfk_2")
   objetivo_general_responsable objetivo_general_responsable[]
   repositorio_estrategico      repositorio_estrategico[]
 
   @@index([id_perspectiva], map: "id_perspectiva")
-  @@index([id_responsable], map: "id_responsable")
 }
 
 model objetivo_interdependencia {
@@ -432,9 +426,7 @@ model usuario {
   kpi_valor_creados               kpi_valor[]                       @relation("kpi_valor_created_by")
   kpi_valor_eliminados            kpi_valor[]                       @relation("kpi_valor_deleted_by")
   kpi_valor_actualizados          kpi_valor[]                       @relation("kpi_valor_updated_by")
-  objetivo_especifico             objetivo_especifico[]
   objetivo_especifico_responsable objetivo_especifico_responsable[]
-  objetivo_general                objetivo_general[]
   objetivo_general_responsable    objetivo_general_responsable[]
   objetivo_interdependencia       objetivo_interdependencia[]
   prioridad                       prioridad[]

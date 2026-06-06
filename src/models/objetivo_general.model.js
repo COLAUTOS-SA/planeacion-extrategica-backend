@@ -29,7 +29,7 @@ export class ObjetivoGeneralModel {
             usuario: true,
           },
         },
-        objetivos_especificos: true,
+        objetivo_especifico: true,
       },
     });
   }
@@ -70,10 +70,7 @@ export class ObjetivoGeneralModel {
     });
   }
 
-  async replaceResponsables(
-    idObjetivoGeneral,
-    responsables,
-  ) {
+  async replaceResponsables(idObjetivoGeneral, responsables) {
     return prisma.$transaction(async (tx) => {
       await tx.objetivo_general_responsable.deleteMany({
         where: {
