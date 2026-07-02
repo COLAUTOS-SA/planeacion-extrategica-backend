@@ -59,6 +59,16 @@ export class TareaModel {
     });
   }
 
+  async countUsuariosByIds(ids) {
+    return prisma.usuario.count({
+      where: {
+        id_usuario: {
+          in: ids,
+        },
+      },
+    });
+  }
+
   async update(id, data) {
     return prisma.tarea.update({
       where: {

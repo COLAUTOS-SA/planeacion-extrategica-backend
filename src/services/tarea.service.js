@@ -50,6 +50,27 @@ export class TareaService {
   }
 
   async create(data) {
+    const responsables = [
+      ...new Set((data.responsables || []).map(Number)),
+    ];
+
+    if (!responsables.length) {
+      throw new AppError(
+        "Debes asignar al menos un responsable",
+        400,
+      );
+    }
+
+    const usuariosValidos =
+      await this.model.countUsuariosByIds(responsables);
+
+    if (usuariosValidos !== responsables.length) {
+      throw new AppError(
+        "Uno o varios responsables no existen",
+        400,
+      );
+    }
+
     const objetivo =
       await this.objetivoModel.findById(
         data.id_objetivo_especifico,
@@ -96,7 +117,7 @@ export class TareaService {
           data.id_estado,
 
         id_responsable:
-          data.id_responsable,
+          data.id_responsable ?? responsables[0],
 
         id_objetivo_especifico:
           data.id_objetivo_especifico,
@@ -107,7 +128,7 @@ export class TareaService {
 
     await this.model.replaceResponsables(
       tarea.id_tarea,
-      data.responsables ?? [],
+      responsables,
     );
 
     await this.planeacionService.recalcularCadena(
@@ -134,6 +155,45 @@ export class TareaService {
       data.id_estado ??
       tarea.id_estado;
 
+    if (data.id_objetivo_especifico) {
+      const objetivo =
+        await this.objetivoModel.findById(
+          data.id_objetivo_especifico,
+        );
+
+      if (!objetivo) {
+        throw new AppError(
+          "Objetivo específico no encontrado",
+          400,
+        );
+      }
+    }
+
+    let responsables = null;
+
+    if (Array.isArray(data.responsables)) {
+      responsables = [
+        ...new Set(data.responsables.map(Number)),
+      ];
+
+      if (!responsables.length) {
+        throw new AppError(
+          "Debes asignar al menos un responsable",
+          400,
+        );
+      }
+
+      const usuariosValidos =
+        await this.model.countUsuariosByIds(responsables);
+
+      if (usuariosValidos !== responsables.length) {
+        throw new AppError(
+          "Uno o varios responsables no existen",
+          400,
+        );
+      }
+    }
+
     const porcentajeAvance =
       this.calcularAvancePorEstado(
         idEstado,
@@ -141,8 +201,15 @@ export class TareaService {
           tarea.porcentaje_avance,
       );
 
+    const { responsables: _responsables, ...updateData } = data;
+
     await this.model.update(id, {
-      ...data,
+      ...updateData,
+
+      id_responsable:
+        updateData.id_responsable ??
+        responsables?.[0] ??
+        undefined,
 
       porcentaje_avance:
         porcentajeAvance,
@@ -162,20 +229,21 @@ export class TareaService {
           : undefined,
     });
 
-    if (
-      Array.isArray(
-        data.responsables,
-      )
-    ) {
+    if (responsables) {
       await this.model.replaceResponsables(
         id,
-        data.responsables,
+        responsables,
       );
     }
 
-    await this.planeacionService.recalcularCadena(
-      tarea.id_objetivo_especifico,
-    );
+    await this.planeacionService.recalcularCadena(tarea.id_objetivo_especifico);
+
+    if (
+      data.id_objetivo_especifico &&
+      data.id_objetivo_especifico !== tarea.id_objetivo_especifico
+    ) {
+      await this.planeacionService.recalcularCadena(data.id_objetivo_especifico);
+    }
 
     return this.getById(id);
   }

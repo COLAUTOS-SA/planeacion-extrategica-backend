@@ -202,6 +202,32 @@ export class CteraService {
     return relativePath;
   }
 
+  static buildRepositorioEstrategicoPath(fecha, fileName) {
+    const safeName = fileName.replace(/\s+/g, "_");
+    return `Ejepro/Repositorio/Estrategico/${fecha}/${safeName}`;
+  }
+
+  static async uploadRepositorioEstrategicoArchivo(fecha, fileName, buffer) {
+    const relativePath = this.buildRepositorioEstrategicoPath(fecha, fileName);
+    const directory = path.dirname(relativePath);
+    const baseName = path.basename(relativePath);
+    const tempPath = `/tmp/${Date.now()}_${baseName}`;
+
+    await fs.promises.writeFile(tempPath, buffer);
+    await this.createRemoteDirectory(directory);
+
+    const command =
+      `smbclient "//${SMB_CONFIG.host}/${SMB_CONFIG.share}" ` +
+      `-U "${SMB_CONFIG.username}%${SMB_CONFIG.password}" ` +
+      `-D "${directory}" ` +
+      `-c "put \\"${tempPath}\\" \\"${baseName}\\""`;
+
+    await execAsync(command);
+    await fs.promises.unlink(tempPath);
+
+    return relativePath;
+  }
+
   static async deleteFile(relativePath) {
     const fileName = path.basename(relativePath);
     const directory = path.dirname(relativePath);

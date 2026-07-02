@@ -33,14 +33,18 @@ const schema = z.object({
   id_estado: z.number(),
 
   id_responsable:
-    z.number(),
+    z.number().optional(),
 
   id_objetivo_especifico:
     z.number(),
 
   responsables: z
     .array(z.number())
-    .optional(),
+    .min(1),
+});
+
+const updateSchema = schema.partial().extend({
+  responsables: z.array(z.number()).min(1).optional(),
 });
 
 export class TareaController {
@@ -103,9 +107,7 @@ export class TareaController {
   ) => {
     try {
       const data =
-        schema
-          .partial()
-          .parse(req.body);
+        updateSchema.parse(req.body);
 
       return successResponse(
         res,
