@@ -11,11 +11,13 @@ const upload = multer({
   limits: { fileSize: 100 * 1024 * 1024 },
 });
 
+const MAX_EVIDENCIA_FILES = 5;
+
 // router.use(authMiddleware);
 
 router.post(
   "/resultados/:id/evidencias/files",
-  upload.array("files"),
+  upload.array("files", MAX_EVIDENCIA_FILES),
   controller.uploadFiles,
 );
 
@@ -25,7 +27,7 @@ router.get("/evidencias/:id", controller.getFile);
 
 router.post(
   "/aprendizajes/:id/evidencias/files",
-  upload.array("files"),
+  upload.array("files", MAX_EVIDENCIA_FILES),
   controller.uploadFilesAprendizaje,
 );
 
@@ -36,7 +38,7 @@ router.post(
 
 router.post(
   "/prioridades/:id/evidencias/files",
-  upload.array("files"),
+  upload.array("files", MAX_EVIDENCIA_FILES),
   controller.uploadFilesPrioridad,
 );
 
