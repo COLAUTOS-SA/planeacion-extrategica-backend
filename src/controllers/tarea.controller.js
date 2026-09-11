@@ -24,6 +24,8 @@ const schema = z.object({
     .number()
     .optional(),
 
+  porcentaje_importancia: z.number().min(0).max(100).optional(),
+
   prioridad: z.enum([
     "BAJA",
     "MEDIA",

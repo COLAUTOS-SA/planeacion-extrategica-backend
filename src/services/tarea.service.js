@@ -124,6 +124,9 @@ export class TareaService {
 
         porcentaje_avance:
           porcentajeAvance,
+
+        porcentaje_importancia:
+          data.porcentaje_importancia ?? 100,
       });
 
     await this.model.replaceResponsables(

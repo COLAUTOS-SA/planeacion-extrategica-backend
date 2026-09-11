@@ -394,6 +394,7 @@ model tarea {
   fecha_inicio           DateTime?           @db.Date
   fecha_fin              DateTime?           @db.Date
   porcentaje_avance      Decimal?            @default(0.00) @db.Decimal(5, 2)
+  porcentaje_importancia Decimal             @default(100.00) @db.Decimal(5, 2)
   prioridad              tarea_prioridad?    @default(MEDIA)
   updated_at             DateTime?           @db.Timestamp(0)
   objetivo_especifico    objetivo_especifico @relation(fields: [id_objetivo_especifico], references: [id_objetivo_especifico], onUpdate: Restrict, map: "tarea_ibfk_1")

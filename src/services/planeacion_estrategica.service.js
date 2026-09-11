@@ -9,17 +9,27 @@ export class PlaneacionEstrategicaService {
 
       select: {
         porcentaje_avance: true,
+        porcentaje_importancia: true,
       },
     });
 
     let avance = 0;
 
     if (tareas.length > 0) {
-      avance =
-        tareas.reduce(
-          (acc, tarea) => acc + Number(tarea.porcentaje_avance || 0),
-          0,
-        ) / tareas.length;
+      const pesoTotal = tareas.reduce(
+        (acc, tarea) => acc + Number(tarea.porcentaje_importancia || 0),
+        0,
+      );
+
+      avance = pesoTotal
+        ? tareas.reduce(
+            (acc, tarea) =>
+              acc +
+              Number(tarea.porcentaje_avance || 0) *
+                Number(tarea.porcentaje_importancia || 0),
+            0,
+          ) / pesoTotal
+        : 0;
     }
 
     await prisma.objetivo_especifico.update({
