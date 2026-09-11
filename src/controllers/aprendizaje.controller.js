@@ -1,0 +1,80 @@
+import { z } from "zod";
+import { successResponse } from "../utils/response.js";
+
+const createSchema = z.object({
+  descripcion: z.string().optional(),
+  fecha: z.string().optional(),
+  comentarios: z.string().optional(),
+  id_estado: z.number().optional(),
+  nombre_responsable: z.string().optional(),
+});
+
+export class AprendizajeController {
+  constructor(service) {
+    this.service = service;
+  }
+
+  create = async (req, res, next) => {
+    try {
+      const data = createSchema.parse(req.body);
+      const user = req.user;
+
+      const result = await this.service.create(data, user);
+
+      return successResponse(res, result, "Creado correctamente", 201);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getAll = async (req, res, next) => {
+    try {
+      const result = await this.service.getAll(req.user, req.query);
+      return successResponse(res, result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  update = async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+
+      const data = {
+        descripcion: req.body.descripcion,
+        fecha: req.body.fecha,
+        comentarios: req.body.comentarios,
+        id_estado: req.body.id_estado,
+        nombre_responsable: req.body.nombre_responsable,
+      };
+
+      const result = await this.service.update(id, data, req.user);
+
+      return successResponse(res, result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  toggleFavorito = async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      const result = await this.service.toggleFavorito(id, req.user);
+
+      return successResponse(res, result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  delete = async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      await this.service.delete(id, req.user);
+
+      return successResponse(res, null, "Aprendizaje eliminado", 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+}

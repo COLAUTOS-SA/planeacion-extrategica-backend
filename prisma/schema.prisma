@@ -4,17 +4,21 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model aprendizaje {
-  id_aprendizaje Int       @id @default(autoincrement())
-  descripcion    String    @db.Text
-  fecha          DateTime? @db.Date
-  comentarios    String?   @db.Text
-  id_responsable Int
-  id_estado      Int
-  usuario        usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "aprendizaje_ibfk_1")
-  estado         estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "aprendizaje_ibfk_2")
+  id_aprendizaje     Int         @id @default(autoincrement())
+  descripcion        String      @db.Text
+  fecha              DateTime?   @db.Date
+  comentarios        String?     @db.Text
+  id_responsable     Int
+  id_estado          Int
+  favorito           Boolean?    @default(false)
+  nombre_responsable String?     @db.VarChar(150)
+  usuario            usuario     @relation(fields: [id_responsable], references: [id_usuario], onUpdate: Restrict, map: "aprendizaje_ibfk_1")
+  estado             estado      @relation(fields: [id_estado], references: [id_estado], onUpdate: Restrict, map: "aprendizaje_ibfk_2")
+  evidencias         evidencia[]
 
   @@index([id_estado], map: "id_estado")
   @@index([id_responsable], map: "id_responsable")
@@ -27,8 +31,8 @@ model calendario_estrategico {
   observaciones       String?           @db.Text
   id_objetivo_general Int?
   id_usuario_creador  Int
-  objetivo_general    objetivo_general? @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onDelete: NoAction, onUpdate: NoAction, map: "calendario_estrategico_ibfk_1")
-  usuario             usuario           @relation(fields: [id_usuario_creador], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "calendario_estrategico_ibfk_2")
+  objetivo_general    objetivo_general? @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onDelete: Restrict, onUpdate: Restrict, map: "calendario_estrategico_ibfk_1")
+  usuario             usuario           @relation(fields: [id_usuario_creador], references: [id_usuario], onUpdate: Restrict, map: "calendario_estrategico_ibfk_2")
 
   @@index([id_objetivo_general], map: "id_objetivo_general")
   @@index([id_usuario_creador], map: "id_usuario_creador")
@@ -39,7 +43,7 @@ model calendario_lideres {
   fecha               DateTime              @db.Date
   resumen_reunion     String?               @db.Text
   id_usuario_creador  Int
-  usuario             usuario               @relation(fields: [id_usuario_creador], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "calendario_lideres_ibfk_1")
+  usuario             usuario               @relation(fields: [id_usuario_creador], references: [id_usuario], onUpdate: Restrict, map: "calendario_lideres_ibfk_1")
   repositorio_lideres repositorio_lideres[]
 
   @@index([id_usuario_creador], map: "id_usuario_creador")
@@ -72,7 +76,7 @@ model historial_cambios {
   comentario       String?   @db.Text
   fecha            DateTime? @default(now()) @db.Timestamp(0)
   id_usuario       Int?
-  usuario          usuario?  @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "historial_cambios_ibfk_1")
+  usuario          usuario?  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Restrict, onUpdate: Restrict, map: "historial_cambios_ibfk_1")
 
   @@index([id_usuario], map: "id_usuario")
 }
@@ -87,58 +91,158 @@ model kpi {
   id_responsable      Int
   id_objetivo_general Int?
   created_at          DateTime?         @default(now()) @db.Timestamp(0)
-  usuario             usuario           @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "kpi_ibfk_1")
-  objetivo_general    objetivo_general? @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onDelete: NoAction, onUpdate: NoAction, map: "kpi_ibfk_2")
+  tipo                kpi_tipo?         @default(individual)
+  usuario             usuario           @relation(fields: [id_responsable], references: [id_usuario], onUpdate: Restrict, map: "kpi_ibfk_1")
+  objetivo_general    objetivo_general? @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onDelete: Restrict, onUpdate: Restrict, map: "kpi_ibfk_2")
+  kpi_indicador       kpi_indicador[]
+  kpi_sede            kpi_sede[]
 
   @@index([id_objetivo_general], map: "id_objetivo_general")
   @@index([id_responsable], map: "id_responsable")
+}
+
+model sede {
+  id_sede           Int                 @id @default(autoincrement())
+  nombre            String              @db.VarChar(100)
+  kpi_sede          kpi_sede[]
+  kpi_valor         kpi_valor[]
+  plan_mensual_sede plan_mensual_sede[]
+  usuarios_sede     usuario_sede[]
+}
+
+model kpi_sede {
+  id_kpi  Int
+  id_sede Int
+  kpi     kpi  @relation(fields: [id_kpi], references: [id_kpi], onUpdate: Restrict, map: "kpi_sede_ibfk_1")
+  sede    sede @relation(fields: [id_sede], references: [id_sede], onUpdate: Restrict, map: "kpi_sede_ibfk_2")
+
+  @@id([id_kpi, id_sede])
+  @@index([id_sede], map: "id_sede")
+}
+
+model kpi_indicador {
+  id_indicador        Int                   @id @default(autoincrement())
+  id_kpi              Int
+  nombre              String                @db.VarChar(150)
+  kpi                 kpi                   @relation(fields: [id_kpi], references: [id_kpi], onUpdate: Restrict, map: "kpi_indicador_ibfk_1")
+  kpi_indicador_campo kpi_indicador_campo[]
+  kpi_valor           kpi_valor[]
+
+  @@index([id_kpi], map: "id_kpi")
+}
+
+model kpi_indicador_campo {
+  id_campo        Int                      @id @default(autoincrement())
+  id_indicador    Int
+  nombre          String                   @db.VarChar(120)
+  tipo            kpi_indicador_campo_tipo @default(numero)
+  orden           Int                      @default(1)
+  requerido       Boolean                  @default(false)
+  editable        Boolean                  @default(true)
+  es_calculado    Boolean                  @default(false)
+  formula         String?                  @db.VarChar(255)
+  minimo          Decimal?                 @db.Decimal(10, 2)
+  maximo          Decimal?                 @db.Decimal(10, 2)
+  prefijo         String?                  @db.VarChar(20)
+  sufijo          String?                  @db.VarChar(20)
+  decimales       Int                      @default(2)
+  kpi_indicador   kpi_indicador            @relation(fields: [id_indicador], references: [id_indicador], onUpdate: Restrict, map: "kpi_indicador_campo_ibfk_1")
+  kpi_valor_campo kpi_valor_campo[]
+
+  @@index([id_indicador], map: "id_indicador")
+}
+
+model kpi_valor {
+  id_valor        Int               @id @default(autoincrement())
+  id_indicador    Int
+  id_sede         Int?
+  fecha           DateTime          @db.Date
+  objetivo        Decimal?          @db.Decimal(10, 2)
+  resultado       Decimal?          @db.Decimal(10, 2)
+  created_by      Int?
+  updated_at      DateTime?         @db.Timestamp(0)
+  updated_by      Int?
+  deleted_at      DateTime?         @db.Timestamp(0)
+  deleted_by      Int?
+  creador         usuario?          @relation("kpi_valor_created_by", fields: [created_by], references: [id_usuario], onDelete: Restrict, onUpdate: Restrict, map: "fk_kpi_valor_created_by")
+  eliminador      usuario?          @relation("kpi_valor_deleted_by", fields: [deleted_by], references: [id_usuario], onDelete: Restrict, onUpdate: Restrict, map: "fk_kpi_valor_deleted_by")
+  actualizador    usuario?          @relation("kpi_valor_updated_by", fields: [updated_by], references: [id_usuario], onDelete: Restrict, onUpdate: Restrict, map: "fk_kpi_valor_updated_by")
+  kpi_indicador   kpi_indicador     @relation(fields: [id_indicador], references: [id_indicador], onUpdate: Restrict, map: "kpi_valor_ibfk_1")
+  sede            sede?             @relation(fields: [id_sede], references: [id_sede], onDelete: Restrict, onUpdate: Restrict, map: "kpi_valor_ibfk_2")
+  kpi_valor_campo kpi_valor_campo[]
+
+  @@unique([id_indicador, id_sede, fecha], map: "uk_kpi_valor_indicador_sede_fecha")
+  @@index([id_sede], map: "id_sede")
+  @@index([created_by], map: "fk_kpi_valor_created_by")
+  @@index([updated_by], map: "fk_kpi_valor_updated_by")
+  @@index([deleted_by], map: "fk_kpi_valor_deleted_by")
+}
+
+model kpi_valor_campo {
+  id_valor      Int
+  id_campo      Int
+  valor_decimal Decimal?            @db.Decimal(14, 4)
+  valor_texto   String?             @db.Text
+  kpi_valor     kpi_valor           @relation(fields: [id_valor], references: [id_valor], onDelete: Cascade, onUpdate: Restrict, map: "kpi_valor_campo_ibfk_1")
+  campo         kpi_indicador_campo @relation(fields: [id_campo], references: [id_campo], onUpdate: Restrict, map: "kpi_valor_campo_ibfk_2")
+
+  @@id([id_valor, id_campo])
+  @@index([id_campo], map: "id_campo")
 }
 
 model negocio {
   id_negocio      Int               @id @default(autoincrement())
   nombre          String            @db.VarChar(150)
   plan_alto_nivel plan_alto_nivel[]
+  plan_anual      plan_anual[]
+  plan_mensual    plan_mensual[]
 }
 
 model objetivo_especifico {
-  id_objetivo_especifico    Int                         @id @default(autoincrement())
-  titulo                    String                      @db.VarChar(200)
-  descripcion               String?                     @db.Text
-  id_objetivo_general       Int
-  id_responsable            Int
-  created_at                DateTime?                   @default(now()) @db.Timestamp(0)
-  objetivo_general          objetivo_general            @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onDelete: NoAction, onUpdate: NoAction, map: "objetivo_especifico_ibfk_1")
-  usuario                   usuario                     @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "objetivo_especifico_ibfk_2")
-  objetivo_interdependencia objetivo_interdependencia[]
-  tarea                     tarea[]
+  id_objetivo_especifico          Int                               @id @default(autoincrement())
+  titulo                          String                            @db.VarChar(200)
+  descripcion                     String?                           @db.Text
+  id_objetivo_general             Int
+  created_at                      DateTime?                         @default(now()) @db.Timestamp(0)
+  fecha_inicio                    DateTime?                         @db.Date
+  fecha_fin                       DateTime?                         @db.Date
+  porcentaje_avance               Decimal?                          @default(0.00) @db.Decimal(5, 2)
+  activo                          Boolean                           @default(true)
+  updated_at                      DateTime?                         @db.Timestamp(0)
+  objetivo_general                objetivo_general                  @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onUpdate: Restrict, map: "objetivo_especifico_ibfk_1")
+  objetivo_especifico_responsable objetivo_especifico_responsable[]
+  objetivo_interdependencia       objetivo_interdependencia[]
+  tarea                           tarea[]
 
   @@index([id_objetivo_general], map: "id_objetivo_general")
-  @@index([id_responsable], map: "id_responsable")
 }
 
 model objetivo_general {
-  id_objetivo_general     Int                       @id @default(autoincrement())
-  titulo                  String                    @db.VarChar(200)
-  descripcion             String?                   @db.Text
-  id_perspectiva          Int
-  id_responsable          Int
-  created_at              DateTime?                 @default(now()) @db.Timestamp(0)
-  calendario_estrategico  calendario_estrategico[]
-  kpi                     kpi[]
-  objetivo_especifico     objetivo_especifico[]
-  perspectiva             perspectiva               @relation(fields: [id_perspectiva], references: [id_perspectiva], onDelete: NoAction, onUpdate: NoAction, map: "objetivo_general_ibfk_1")
-  usuario                 usuario                   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "objetivo_general_ibfk_2")
-  repositorio_estrategico repositorio_estrategico[]
+  id_objetivo_general          Int                            @id @default(autoincrement())
+  titulo                       String                         @db.VarChar(200)
+  descripcion                  String?                        @db.Text
+  id_perspectiva               Int
+  created_at                   DateTime?                      @default(now()) @db.Timestamp(0)
+  fecha_inicio                 DateTime?                      @db.Date
+  fecha_fin                    DateTime?                      @db.Date
+  porcentaje_avance            Decimal?                       @default(0.00) @db.Decimal(5, 2)
+  activo                       Boolean                        @default(true)
+  updated_at                   DateTime?                      @db.Timestamp(0)
+  calendario_estrategico       calendario_estrategico[]
+  kpi                          kpi[]
+  objetivo_especifico          objetivo_especifico[]
+  perspectiva                  perspectiva                    @relation(fields: [id_perspectiva], references: [id_perspectiva], onUpdate: Restrict, map: "objetivo_general_ibfk_1")
+  objetivo_general_responsable objetivo_general_responsable[]
+  repositorio_estrategico      repositorio_estrategico[]
 
   @@index([id_perspectiva], map: "id_perspectiva")
-  @@index([id_responsable], map: "id_responsable")
 }
 
 model objetivo_interdependencia {
   id_objetivo_especifico Int
   id_usuario             Int
-  objetivo_especifico    objetivo_especifico @relation(fields: [id_objetivo_especifico], references: [id_objetivo_especifico], onDelete: NoAction, onUpdate: NoAction, map: "objetivo_interdependencia_ibfk_1")
-  usuario                usuario             @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "objetivo_interdependencia_ibfk_2")
+  objetivo_especifico    objetivo_especifico @relation(fields: [id_objetivo_especifico], references: [id_objetivo_especifico], onUpdate: Restrict, map: "objetivo_interdependencia_ibfk_1")
+  usuario                usuario             @relation(fields: [id_usuario], references: [id_usuario], onUpdate: Restrict, map: "objetivo_interdependencia_ibfk_2")
 
   @@id([id_objetivo_especifico, id_usuario])
   @@index([id_usuario], map: "id_usuario")
@@ -147,6 +251,10 @@ model objetivo_interdependencia {
 model perspectiva {
   id_perspectiva   Int                @id @default(autoincrement())
   nombre           String             @db.VarChar(100)
+  descripcion      String?            @db.Text
+  color            String?            @db.VarChar(20)
+  activo           Boolean            @default(true)
+  updated_at       DateTime?          @db.Timestamp(0)
   objetivo_general objetivo_general[]
 }
 
@@ -155,20 +263,55 @@ model plan_alto_nivel {
   anio           Int     @db.Year
   valor_esperado Decimal @db.Decimal(18, 2)
   id_negocio     Int
-  negocio        negocio @relation(fields: [id_negocio], references: [id_negocio], onDelete: NoAction, onUpdate: NoAction, map: "plan_alto_nivel_ibfk_1")
+  negocio        negocio @relation(fields: [id_negocio], references: [id_negocio], onUpdate: Restrict, map: "plan_alto_nivel_ibfk_1")
 
   @@index([id_negocio], map: "id_negocio")
 }
 
+model plan_anual {
+  id_plan    Int       @id @default(autoincrement())
+  anio       Int       @db.Year
+  id_negocio Int
+  indicador  Decimal   @default(0.00) @db.Decimal(18, 2)
+  ejecutado  Decimal?  @db.Decimal(18, 2)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  negocio    negocio   @relation(fields: [id_negocio], references: [id_negocio], onUpdate: Restrict, map: "plan_anual_ibfk_1")
+
+  @@unique([anio, id_negocio], map: "anio")
+  @@index([id_negocio], map: "id_negocio")
+}
+
+model plan_mensual {
+  id_plan_mensual   Int                 @id @default(autoincrement())
+  anio              Int                 @db.Year
+  mes               Int                 @db.TinyInt
+  id_negocio        Int
+  indicador         Decimal             @default(0.00) @db.Decimal(18, 2)
+  ejecutado         Decimal?            @db.Decimal(18, 2)
+  created_at        DateTime?           @default(now()) @db.Timestamp(0)
+  negocio           negocio             @relation(fields: [id_negocio], references: [id_negocio], onUpdate: Restrict, map: "plan_mensual_ibfk_1")
+  plan_mensual_sede plan_mensual_sede[]
+
+  @@unique([anio, mes, id_negocio], map: "uk_plan_mensual_anio_mes_negocio")
+  @@index([id_negocio], map: "idx_plan_mensual_negocio")
+}
+
 model prioridad {
-  id_prioridad   Int       @id @default(autoincrement())
-  descripcion    String    @db.Text
-  fecha          DateTime? @db.Date
-  comentarios    String?   @db.Text
-  id_responsable Int
-  id_estado      Int
-  usuario        usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "prioridad_ibfk_1")
-  estado         estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "prioridad_ibfk_2")
+  id_prioridad         Int         @id @default(autoincrement())
+  descripcion          String      @db.Text
+  fecha_creacion       DateTime?   @default(now()) @db.DateTime(0)
+  fecha_inicio         DateTime?   @db.Date
+  fecha_fin            DateTime?   @db.Date
+  comentarios          String?     @db.Text
+  id_responsable       Int
+  id_estado            Int
+  favorito             Boolean?    @default(false)
+  avance               Int         @default(0)
+  convertido_resultado Boolean     @default(false)
+  nombre_responsable   String?     @db.VarChar(150)
+  evidencias           evidencia[]
+  usuario              usuario     @relation(fields: [id_responsable], references: [id_usuario], onUpdate: Restrict, map: "prioridad_ibfk_1")
+  estado               estado      @relation(fields: [id_estado], references: [id_estado], onUpdate: Restrict, map: "prioridad_ibfk_2")
 
   @@index([id_estado], map: "id_estado")
   @@index([id_responsable], map: "id_responsable")
@@ -181,8 +324,8 @@ model repositorio_estrategico {
   fecha               DateTime?         @db.Date
   id_objetivo_general Int?
   id_usuario_creador  Int
-  objetivo_general    objetivo_general? @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onDelete: NoAction, onUpdate: NoAction, map: "repositorio_estrategico_ibfk_1")
-  usuario             usuario           @relation(fields: [id_usuario_creador], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "repositorio_estrategico_ibfk_2")
+  objetivo_general    objetivo_general? @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onDelete: Restrict, onUpdate: Restrict, map: "repositorio_estrategico_ibfk_1")
+  usuario             usuario           @relation(fields: [id_usuario_creador], references: [id_usuario], onUpdate: Restrict, map: "repositorio_estrategico_ibfk_2")
 
   @@index([id_objetivo_general], map: "id_objetivo_general")
   @@index([id_usuario_creador], map: "id_usuario_creador")
@@ -195,28 +338,49 @@ model repositorio_lideres {
   fecha              DateTime?           @db.Date
   id_evento          Int?
   id_usuario_creador Int
-  calendario_lideres calendario_lideres? @relation(fields: [id_evento], references: [id_evento], onDelete: NoAction, onUpdate: NoAction, map: "repositorio_lideres_ibfk_1")
-  usuario            usuario             @relation(fields: [id_usuario_creador], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "repositorio_lideres_ibfk_2")
+  calendario_lideres calendario_lideres? @relation(fields: [id_evento], references: [id_evento], onDelete: Restrict, onUpdate: Restrict, map: "repositorio_lideres_ibfk_1")
+  usuario            usuario             @relation(fields: [id_usuario_creador], references: [id_usuario], onUpdate: Restrict, map: "repositorio_lideres_ibfk_2")
 
   @@index([id_evento], map: "id_evento")
   @@index([id_usuario_creador], map: "id_usuario_creador")
 }
 
 model resultado_clave {
-  id_resultado   Int       @id @default(autoincrement())
-  compromiso     String    @db.Text
-  fecha_creacion DateTime? @db.Date
-  fecha_inicio   DateTime? @db.Date
-  fecha_fin      DateTime? @db.Date
-  comentarios    String?   @db.Text
-  favorito       Boolean?  @default(false)
-  id_responsable Int
-  id_estado      Int
-  usuario        usuario   @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "resultado_clave_ibfk_1")
-  estado         estado    @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "resultado_clave_ibfk_2")
+  id_resultado       Int         @id @default(autoincrement())
+  compromiso         String      @db.Text
+  fecha_creacion     DateTime?   @db.DateTime(0)
+  fecha_inicio       DateTime?   @db.Date
+  fecha_fin          DateTime?   @db.Date
+  comentarios        String?     @db.Text
+  favorito           Boolean?    @default(false)
+  id_responsable     Int
+  id_estado          Int
+  nombre_responsable String?     @db.VarChar(150)
+  avance             Int         @default(0)
+  evidencias         evidencia[]
+  usuario            usuario     @relation(fields: [id_responsable], references: [id_usuario], onUpdate: Restrict, map: "resultado_clave_ibfk_1")
+  estado             estado      @relation(fields: [id_estado], references: [id_estado], onUpdate: Restrict, map: "resultado_clave_ibfk_2")
 
   @@index([id_estado], map: "id_estado")
   @@index([id_responsable], map: "id_responsable")
+}
+
+model rol {
+  id_rol         Int              @id @default(autoincrement())
+  nombre         String           @unique(map: "nombre") @db.VarChar(50)
+  usuario        usuario[]
+  usuarios_roles usuarios_roles[]
+}
+
+model usuarios_roles {
+  id_usuario Int
+  id_rol     Int
+  usuario    usuario @relation(fields: [id_usuario], references: [id_usuario], onUpdate: Restrict, map: "usuarios_roles_ibfk_1")
+  rol        rol     @relation(fields: [id_rol], references: [id_rol], onUpdate: Restrict, map: "usuarios_roles_ibfk_2")
+
+  @@id([id_usuario, id_rol])
+  @@index([id_rol], map: "id_rol")
+  @@map("usuarios_roles")
 }
 
 model tarea {
@@ -226,9 +390,17 @@ model tarea {
   id_responsable         Int
   id_estado              Int
   created_at             DateTime?           @default(now()) @db.Timestamp(0)
-  objetivo_especifico    objetivo_especifico @relation(fields: [id_objetivo_especifico], references: [id_objetivo_especifico], onDelete: NoAction, onUpdate: NoAction, map: "tarea_ibfk_1")
-  usuario                usuario             @relation(fields: [id_responsable], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "tarea_ibfk_2")
-  estado                 estado              @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "tarea_ibfk_3")
+  titulo                 String?             @db.VarChar(200)
+  fecha_inicio           DateTime?           @db.Date
+  fecha_fin              DateTime?           @db.Date
+  porcentaje_avance      Decimal?            @default(0.00) @db.Decimal(5, 2)
+  porcentaje_importancia Decimal             @default(100.00) @db.Decimal(5, 2)
+  prioridad              tarea_prioridad?    @default(MEDIA)
+  updated_at             DateTime?           @db.Timestamp(0)
+  objetivo_especifico    objetivo_especifico @relation(fields: [id_objetivo_especifico], references: [id_objetivo_especifico], onUpdate: Restrict, map: "tarea_ibfk_1")
+  usuario                usuario             @relation(fields: [id_responsable], references: [id_usuario], onUpdate: Restrict, map: "tarea_ibfk_2")
+  estado                 estado              @relation(fields: [id_estado], references: [id_estado], onUpdate: Restrict, map: "tarea_ibfk_3")
+  tarea_responsable      tarea_responsable[]
 
   @@index([id_estado], map: "id_estado")
   @@index([id_objetivo_especifico], map: "id_objetivo_especifico")
@@ -236,24 +408,134 @@ model tarea {
 }
 
 model usuario {
-  id_usuario                Int                         @id @default(autoincrement())
-  nombre                    String                      @db.VarChar(150)
-  cargo                     String?                     @db.VarChar(100)
-  area                      String?                     @db.VarChar(100)
-  email                     String?                     @db.VarChar(150)
-  activo                    Boolean?                    @default(true)
-  created_at                DateTime?                   @default(now()) @db.Timestamp(0)
-  aprendizaje               aprendizaje[]
-  calendario_estrategico    calendario_estrategico[]
-  calendario_lideres        calendario_lideres[]
-  historial_cambios         historial_cambios[]
-  kpi                       kpi[]
-  objetivo_especifico       objetivo_especifico[]
-  objetivo_general          objetivo_general[]
-  objetivo_interdependencia objetivo_interdependencia[]
-  prioridad                 prioridad[]
-  repositorio_estrategico   repositorio_estrategico[]
-  repositorio_lideres       repositorio_lideres[]
-  resultado_clave           resultado_clave[]
-  tarea                     tarea[]
+  id_usuario                      Int                               @id @default(autoincrement())
+  nombre                          String                            @db.VarChar(150)
+  cargo                           String?                           @db.VarChar(100)
+  area                            String?                           @db.VarChar(100)
+  email                           String?                           @db.VarChar(150)
+  activo                          Boolean?                          @default(true)
+  created_at                      DateTime?                         @default(now()) @db.Timestamp(0)
+  password                        String                            @db.VarChar(255)
+  id_rol                          Int
+  foto_url                        String?                           @db.VarChar(255)
+  primer_login                    Boolean                           @default(true)
+  aprendizaje                     aprendizaje[]
+  calendario_estrategico          calendario_estrategico[]
+  calendario_lideres              calendario_lideres[]
+  historial_cambios               historial_cambios[]
+  kpi                             kpi[]
+  kpi_valor_creados               kpi_valor[]                       @relation("kpi_valor_created_by")
+  kpi_valor_eliminados            kpi_valor[]                       @relation("kpi_valor_deleted_by")
+  kpi_valor_actualizados          kpi_valor[]                       @relation("kpi_valor_updated_by")
+  objetivo_especifico_responsable objetivo_especifico_responsable[]
+  objetivo_general_responsable    objetivo_general_responsable[]
+  objetivo_interdependencia       objetivo_interdependencia[]
+  prioridad                       prioridad[]
+  repositorio_estrategico         repositorio_estrategico[]
+  repositorio_lideres             repositorio_lideres[]
+  resultado_clave                 resultado_clave[]
+  tarea                           tarea[]
+  tarea_responsable               tarea_responsable[]
+  rol                             rol                               @relation(fields: [id_rol], references: [id_rol], onUpdate: Restrict, map: "fk_usuario_rol")
+  usuario_sede                    usuario_sede[]
+  usuarios_roles                  usuarios_roles[]
+
+  @@index([id_rol], map: "fk_usuario_rol")
+}
+
+model usuario_sede {
+  id_usuario Int
+  id_sede    Int
+  usuario    usuario @relation(fields: [id_usuario], references: [id_usuario], onUpdate: Restrict, map: "usuario_sede_ibfk_1")
+  sede       sede    @relation(fields: [id_sede], references: [id_sede], onUpdate: Restrict, map: "usuario_sede_ibfk_2")
+
+  @@id([id_usuario, id_sede])
+  @@index([id_sede], map: "id_sede")
+}
+
+model evidencia {
+  id_evidencia    Int              @id @default(autoincrement())
+  tipo            evidencia_tipo
+  url             String           @db.VarChar(500)
+  descripcion     String?          @db.VarChar(255)
+  id_resultado    Int?
+  id_prioridad    Int?
+  id_aprendizaje  Int?
+  fecha_creacion  DateTime?        @default(now()) @db.Timestamp(0)
+  resultado_clave resultado_clave? @relation(fields: [id_resultado], references: [id_resultado], onDelete: Cascade, onUpdate: Restrict, map: "evidencia_ibfk_1")
+  prioridad       prioridad?       @relation(fields: [id_prioridad], references: [id_prioridad], onDelete: Cascade, onUpdate: Restrict, map: "evidencia_ibfk_2")
+  aprendizaje     aprendizaje?     @relation(fields: [id_aprendizaje], references: [id_aprendizaje], onDelete: Cascade, onUpdate: Restrict, map: "evidencia_ibfk_3")
+
+  @@index([id_aprendizaje], map: "id_aprendizaje")
+  @@index([id_prioridad], map: "id_prioridad")
+  @@index([id_resultado], map: "id_resultado")
+}
+
+model plan_mensual_sede {
+  id_plan_mensual_sede Int          @id @default(autoincrement())
+  id_plan_mensual      Int
+  id_sede              Int
+  indicador            Decimal      @default(0.00) @db.Decimal(18, 2)
+  ejecutado            Decimal?     @db.Decimal(18, 2)
+  plan_mensual         plan_mensual @relation(fields: [id_plan_mensual], references: [id_plan_mensual], onDelete: Cascade, onUpdate: Restrict, map: "fk_pms_plan")
+  sede                 sede         @relation(fields: [id_sede], references: [id_sede], onUpdate: Restrict, map: "fk_pms_sede")
+
+  @@unique([id_plan_mensual, id_sede], map: "uk_plan_mensual_sede")
+  @@index([id_sede], map: "fk_pms_sede")
+}
+
+model objetivo_especifico_responsable {
+  id_objetivo_especifico Int
+  id_usuario             Int
+  objetivo_especifico    objetivo_especifico @relation(fields: [id_objetivo_especifico], references: [id_objetivo_especifico], onDelete: Cascade, onUpdate: Restrict, map: "objetivo_especifico_responsable_ibfk_1")
+  usuario                usuario             @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: Restrict, map: "objetivo_especifico_responsable_ibfk_2")
+
+  @@id([id_objetivo_especifico, id_usuario])
+  @@index([id_usuario], map: "id_usuario")
+}
+
+model objetivo_general_responsable {
+  id_objetivo_general Int
+  id_usuario          Int
+  objetivo_general    objetivo_general @relation(fields: [id_objetivo_general], references: [id_objetivo_general], onDelete: Cascade, onUpdate: Restrict, map: "objetivo_general_responsable_ibfk_1")
+  usuario             usuario          @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: Restrict, map: "objetivo_general_responsable_ibfk_2")
+
+  @@id([id_objetivo_general, id_usuario])
+  @@index([id_usuario], map: "id_usuario")
+}
+
+model tarea_responsable {
+  id_tarea   Int
+  id_usuario Int
+  tarea      tarea   @relation(fields: [id_tarea], references: [id_tarea], onDelete: Cascade, onUpdate: Restrict, map: "tarea_responsable_ibfk_1")
+  usuario    usuario @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: Restrict, map: "tarea_responsable_ibfk_2")
+
+  @@id([id_tarea, id_usuario])
+  @@index([id_usuario], map: "id_usuario")
+}
+
+enum evidencia_tipo {
+  imagen
+  video
+  link
+}
+
+enum kpi_tipo {
+  individual
+  regional
+}
+
+enum kpi_indicador_campo_tipo {
+  texto
+  numero
+  porcentaje
+  moneda_cop
+  rango_porcentual
+  calculado
+}
+
+enum tarea_prioridad {
+  BAJA
+  MEDIA
+  ALTA
 }
